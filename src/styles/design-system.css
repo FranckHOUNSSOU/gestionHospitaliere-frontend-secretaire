@@ -655,6 +655,7 @@
   background: var(--c-accent) !important;
   color: #ffffff !important;
   border-color: var(--c-accent) !important;
+  margin-bottom: 42px !important;
 }
 
 .adm-btn-primary:hover {

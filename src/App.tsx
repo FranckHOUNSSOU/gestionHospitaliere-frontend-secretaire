@@ -9,8 +9,10 @@ import DashboardAgent from './pages/DashboardAgent';
 import PatientList from './pages/patients/PatientList';
 import PatientDetail from './pages/patients/PatientDetail';
 import PatientForm from './pages/patients/PatientForm';
+import PatientFile from './pages/patients/PatientFile';
 import AdmissionList from './pages/admissions/AdmissionList';
 import AdmissionForm from './pages/admissions/AdmissionForm';
+import AdmissionDischarge from './pages/admissions/AdmissionDischarge';
 import AppointmentList from './pages/appointments/AppointmentList';
 import AppointmentForm from './pages/appointments/AppointmentForm';
 import InvoiceList from './pages/billing/InvoiceList';
@@ -36,17 +38,28 @@ function App() {
               >
                 <Route index element={<DashboardAgent />} />
                 <Route path="dashboard" element={<DashboardAgent />} />
+
+                {/* Patients */}
                 <Route path="patients" element={<PatientList />} />
                 <Route path="patients/new" element={<PatientForm />} />
                 <Route path="patients/:id" element={<PatientDetail />} />
                 <Route path="patients/:id/edit" element={<PatientForm />} />
+                <Route path="patients/:id/dossier" element={<PatientFile />} />
+
+                {/* Admissions */}
                 <Route path="admissions" element={<AdmissionList />} />
                 <Route path="admissions/new" element={<AdmissionForm />} />
+                <Route path="admissions/:id/sortie" element={<AdmissionDischarge />} />
+
+                {/* Rendez-vous */}
                 <Route path="appointments" element={<AppointmentList />} />
                 <Route path="appointments/new" element={<AppointmentForm />} />
+
+                {/* Facturation */}
                 <Route path="billing" element={<InvoiceList />} />
                 <Route path="billing/new" element={<InvoiceForm />} />
                 <Route path="billing/:id" element={<InvoiceDetail />} />
+
                 <Route path="reports" element={<Reports />} />
               </Route>
               <Route path="*" element={<Navigate to="/login" replace />} />

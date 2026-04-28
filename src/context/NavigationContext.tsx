@@ -11,40 +11,55 @@ interface NavigationContextType {
 const NavigationContext = createContext<NavigationContextType | null>(null);
 
 const PAGE_PATHS: Record<Page, string | ((id: string) => string)> = {
-  'dashboard':       '/',
-  'patients':        '/patients',
-  'patient-new':     '/patients/new',
-  'patient-detail':  (id) => `/patients/${id}`,
-  'patient-edit':    (id) => `/patients/${id}/edit`,
-  'admissions':      '/admissions',
-  'admission-new':   '/admissions/new',
-  'appointments':    '/appointments',
-  'appointment-new': '/appointments/new',
-  'billing':         '/billing',
-  'billing-new':     '/billing/new',
-  'billing-detail':  (id) => `/billing/${id}`,
-  'reports':         '/reports',
+  'dashboard':            '/',
+  'patients':             '/patients',
+  'patient-new':          '/patients/new',
+  'patient-detail':       (id) => `/patients/${id}`,
+  'patient-edit':         (id) => `/patients/${id}/edit`,
+  'patient-file':         (id) => `/patients/${id}/dossier`,       // ← nouveau
+  'admissions':           '/admissions',
+  'admission-new':        '/admissions/new',
+  'admission-discharge':  (id) => `/admissions/${id}/sortie`,      // ← nouveau
+  'appointments':         '/appointments',
+  'appointment-new':      '/appointments/new',
+  'billing':              '/billing',
+  'billing-new':          '/billing/new',
+  'billing-detail':       (id) => `/billing/${id}`,
+  'reports':              '/reports',
 };
 
 function parsePage(pathname: string): NavigationState {
+  // patient-edit
   const editMatch = pathname.match(/^\/patients\/([^/]+)\/edit$/);
   if (editMatch) return { page: 'patient-edit', selectedId: editMatch[1] };
 
+  // patient-file  (dossier)
+  const fileMatch = pathname.match(/^\/patients\/([^/]+)\/dossier$/);
+  if (fileMatch) return { page: 'patient-file', selectedId: fileMatch[1] };
+
+  // patient-detail
   const patientMatch = pathname.match(/^\/patients\/([^/]+)$/);
-  if (patientMatch && patientMatch[1] !== 'new') return { page: 'patient-detail', selectedId: patientMatch[1] };
+  if (patientMatch && patientMatch[1] !== 'new')
+    return { page: 'patient-detail', selectedId: patientMatch[1] };
 
+  // admission-discharge  (sortie)
+  const dischargeMatch = pathname.match(/^\/admissions\/([^/]+)\/sortie$/);
+  if (dischargeMatch) return { page: 'admission-discharge', selectedId: dischargeMatch[1] };
+
+  // billing-detail
   const billingMatch = pathname.match(/^\/billing\/([^/]+)$/);
-  if (billingMatch && billingMatch[1] !== 'new') return { page: 'billing-detail', selectedId: billingMatch[1] };
+  if (billingMatch && billingMatch[1] !== 'new')
+    return { page: 'billing-detail', selectedId: billingMatch[1] };
 
-  if (pathname === '/patients/new') return { page: 'patient-new' };
-  if (pathname === '/patients')     return { page: 'patients' };
-  if (pathname === '/admissions')   return { page: 'admissions' };
-  if (pathname === '/admissions/new') return { page: 'admission-new' };
-  if (pathname === '/appointments') return { page: 'appointments' };
-  if (pathname === '/appointments/new') return { page: 'appointment-new' };
-  if (pathname === '/billing')      return { page: 'billing' };
-  if (pathname === '/billing/new')  return { page: 'billing-new' };
-  if (pathname === '/reports')      return { page: 'reports' };
+  if (pathname === '/patients/new')      return { page: 'patient-new' };
+  if (pathname === '/patients')          return { page: 'patients' };
+  if (pathname === '/admissions')        return { page: 'admissions' };
+  if (pathname === '/admissions/new')    return { page: 'admission-new' };
+  if (pathname === '/appointments')      return { page: 'appointments' };
+  if (pathname === '/appointments/new')  return { page: 'appointment-new' };
+  if (pathname === '/billing')           return { page: 'billing' };
+  if (pathname === '/billing/new')       return { page: 'billing-new' };
+  if (pathname === '/reports')           return { page: 'reports' };
   return { page: 'dashboard' };
 }
 
