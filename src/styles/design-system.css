@@ -406,44 +406,6 @@
   border-top: 1px solid var(--c-bdr);
 }
 
-.adm-sys-box {
-  background: var(--c-surf2);
-  border: 1px solid var(--c-bdr);
-  border-radius: 10px;
-  padding: 12px 14px;
-}
-
-.adm-sys-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px !important;
-  line-height: 1.4;
-  margin-bottom: 4px;
-}
-
-.adm-sys-row:last-child { margin-bottom: 0; }
-.adm-sys-k { color: var(--c-t2) !important; }
-.adm-sys-v {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px !important;
-  font-weight: 500 !important;
-  color: var(--c-green) !important;
-}
-
-.adm-sys-track {
-  height: 3px;
-  background: var(--c-bdr);
-  border-radius: 2px;
-  margin: 5px 0 8px;
-}
-
-.adm-sys-fill {
-  height: 100%;
-  background: var(--c-accent);
-  border-radius: 2px;
-  transition: width 0.3s;
-}
 
 /* ═══════════════════════════════════════════════════════════
    CONTENT COLUMN (outlet + footer)
@@ -454,6 +416,24 @@
   flex-direction: column;
   overflow: hidden;
   min-width: 0;
+  position: relative;
+  background: var(--c-bg);
+}
+.adm-content-col::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 750px;
+  height: 750px;
+  background-image: url('/chuMel-logo.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: 750px auto;
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -463,9 +443,11 @@
   flex: 1;
   overflow-y: auto;
   padding: 22px 24px;
-  background: var(--c-bg);
+  background: transparent;
   min-width: 0;
+  position: relative;
 }
+
 
 .adm-page-h {
   margin-bottom: 20px;
@@ -786,52 +768,6 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   LOGS
-   ═══════════════════════════════════════════════════════════ */
-.adm-log {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--c-bdr);
-}
-
-.adm-log:last-child { border-bottom: none; }
-
-.adm-log-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  margin-top: 4px;
-}
-
-.adm-ld-green { background: var(--c-green) !important; }
-.adm-ld-blue  { background: var(--c-accent) !important; }
-.adm-ld-amber { background: var(--c-amber) !important; }
-.adm-ld-red   { background: var(--c-red) !important; }
-
-.adm-log-msg {
-  font-size: 12px !important;
-  color: var(--c-t1) !important;
-  line-height: 1.5 !important;
-  margin: 0 !important;
-}
-
-.adm-log-msg strong {
-  color: var(--c-t0) !important;
-  font-weight: 600 !important;
-}
-
-.adm-log-time {
-  font-size: 10.5px !important;
-  color: var(--c-t3) !important;
-  font-family: 'JetBrains Mono', monospace !important;
-  margin-top: 3px !important;
-  line-height: 1 !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
    CHART BARS
    ═══════════════════════════════════════════════════════════ */
 .adm-bars {
@@ -864,25 +800,6 @@
   font-size: 9px !important;
   color: var(--c-t3) !important;
   font-family: 'JetBrains Mono', monospace !important;
-  line-height: 1 !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   SERVICES
-   ═══════════════════════════════════════════════════════════ */
-.adm-svc {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--c-bdr);
-}
-
-.adm-svc:last-child { border-bottom: none; }
-
-.adm-svc-name {
-  font-size: 12px !important;
-  color: var(--c-t1) !important;
   line-height: 1 !important;
 }
 
@@ -1246,21 +1163,6 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   INFO ROW
-   ═══════════════════════════════════════════════════════════ */
-.adm-info-row {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 2px !important;
-  padding: 7px 0 !important;
-  border-bottom: 1px solid var(--c-surf3) !important;
-}
-
-.adm-info-row:last-child { border-bottom: none !important; }
-.adm-info-k { font-size: 10.5px !important; color: var(--c-t3) !important; text-transform: uppercase !important; letter-spacing: 0.4px !important; font-weight: 600 !important; }
-.adm-info-v { font-size: 12.5px !important; color: var(--c-t0) !important; font-weight: 500 !important; line-height: 1.3 !important; }
-
-/* ═══════════════════════════════════════════════════════════
    SECTION HEADERS + DIVIDERS
    ═══════════════════════════════════════════════════════════ */
 .adm-sec-h {
@@ -1356,20 +1258,6 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   STAT MINI
-   ═══════════════════════════════════════════════════════════ */
-.adm-stat-mini {
-  background: var(--c-surf2) !important;
-  border: 1px solid var(--c-bdr) !important;
-  border-radius: 8px !important;
-  padding: 10px 14px !important;
-  text-align: center !important;
-}
-
-.adm-stat-mini-val { font-size: 20px !important; font-weight: 700 !important; color: var(--c-t0) !important; line-height: 1 !important; margin-bottom: 3px !important; }
-.adm-stat-mini-lbl { font-size: 10px !important; color: var(--c-t3) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; }
-
-/* ═══════════════════════════════════════════════════════════
    MISC UTILITIES
    ═══════════════════════════════════════════════════════════ */
 .adm-text-truncate { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
@@ -1443,63 +1331,3 @@
 }
 .adm-kpi-danger::before { background: var(--c-red) !important; }
 
-/* ═══════════════════════════════════════════════════════════
-   INVOICE HEADER
-   ═══════════════════════════════════════════════════════════ */
-.adm-invoice-hdr {
-  background: linear-gradient(90deg, #2563eb, #1d4ed8) !important;
-  padding: 20px 24px !important;
-}
-
-.adm-invoice-hdr,
-.adm-invoice-hdr * {
-  color: #fff !important;
-}
-
-.adm-invoice-hdr .adm-tag {
-  background: rgba(255,255,255,0.2) !important;
-  color: #fff !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   CALENDAR (appointment view)
-   ═══════════════════════════════════════════════════════════ */
-.adm-cal-cell {
-  border: 1px solid var(--c-bdr) !important;
-  border-radius: 6px !important;
-  padding: 4px !important;
-  min-height: 76px !important;
-  background: var(--c-surf) !important;
-}
-
-.adm-cal-cell--today {
-  border-color: var(--c-accent) !important;
-  background: var(--c-accent-bg) !important;
-}
-
-.adm-cal-day {
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  color: var(--c-t2) !important;
-  margin-bottom: 3px !important;
-  line-height: 1 !important;
-}
-
-.adm-cal-cell--today .adm-cal-day { color: var(--c-accent) !important; }
-
-.adm-cal-event {
-  border-radius: 3px !important;
-  padding: 2px 4px !important;
-  margin-bottom: 2px !important;
-  font-size: 9px !important;
-  font-weight: 500 !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-  color: #fff !important;
-}
-
-.adm-ce-blue   { background: var(--c-accent) !important; }
-.adm-ce-green  { background: var(--c-green)  !important; }
-.adm-ce-red    { background: var(--c-red)    !important; }
-.adm-ce-gray   { background: var(--c-t3)     !important; }

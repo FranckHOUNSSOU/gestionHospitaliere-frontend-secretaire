@@ -1,0 +1,11 @@
+/* Invoice header gradient */
+.adm-invoice-hdr {
+  background: linear-gradient(90deg, #2563eb, #1d4ed8) !important;
+  padding: 20px 24px !important;
+}
+.adm-invoice-hdr,
+.adm-invoice-hdr * { color: #fff !important; }
+.adm-invoice-hdr .adm-tag {
+  background: rgba(255,255,255,0.2) !important;
+  color: #fff !important;
+}

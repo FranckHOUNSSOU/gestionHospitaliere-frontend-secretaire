@@ -1,0 +1,39 @@
+/* Sidebar footer info panel */
+.adm-sys-box {
+  background: var(--c-surf2);
+  border: 1px solid var(--c-bdr);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.adm-sys-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px !important;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.adm-sys-row:last-child { margin-bottom: 0; }
+.adm-sys-k { color: var(--c-t2) !important; }
+.adm-sys-v {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: var(--c-green) !important;
+}
+
+.adm-sys-track {
+  height: 3px;
+  background: var(--c-bdr);
+  border-radius: 2px;
+  margin: 5px 0 8px;
+}
+
+.adm-sys-fill {
+  height: 100%;
+  background: var(--c-accent);
+  border-radius: 2px;
+  transition: width 0.3s;
+}
