@@ -4,21 +4,21 @@ import { ThemeProvider } from './context/ThemeContext';
 import { NavigationProvider } from './context/NavigationContext';
 import { PrivateRoute } from './utils/PrivateRoute';
 import { Layout } from './layout/Layout';
-import LoginPage from './pages/auth/LoginPage';
-import DashboardAgent from './pages/DashboardAgent';
-import PatientList from './pages/patients/PatientList';
-import PatientDetail from './pages/patients/PatientDetail';
-import PatientForm from './pages/patients/PatientForm';
-import PatientFile from './pages/patients/PatientFile';
-import AdmissionList from './pages/admissions/AdmissionList';
-import AdmissionForm from './pages/admissions/AdmissionForm';
-import AdmissionDischarge from './pages/admissions/AdmissionDischarge';
-import AppointmentList from './pages/appointments/AppointmentList';
-import AppointmentForm from './pages/appointments/AppointmentForm';
-import InvoiceList from './pages/billing/InvoiceList';
-import InvoiceDetail from './pages/billing/InvoiceDetail';
-import InvoiceForm from './pages/billing/InvoiceForm';
-import Reports from './pages/reports/Reports';
+import LoginPage from './pages/auth/LoginPage/LoginPage';
+import DashboardAgent from './pages/DashboardAgent/DashboardAgent';
+import PatientList from './pages/patients/PatientList/PatientList';
+import PatientDetail from './pages/patients/PatientDetail/PatientDetail';
+import PatientForm from './pages/patients/PatientForm/PatientForm';
+import PatientFile from './pages/patients/PatientFile/PatientFile';
+import AdmissionList from './pages/admissions/AdmissionList/AdmissionList';
+import AdmissionForm from './pages/admissions/AdmissionForm/AdmissionForm';
+import AdmissionDischarge from './pages/admissions/AdmissionDischarge/AdmissionDischarge';
+import AppointmentList from './pages/appointments/AppointmentList/AppointmentList';
+import AppointmentForm from './pages/appointments/AppointmentForm/AppointmentForm';
+import InvoiceList from './pages/billing/InvoiceList/InvoiceList';
+import InvoiceDetail from './pages/billing/InvoiceDetail/InvoiceDetail';
+import InvoiceForm from './pages/billing/InvoiceForm/InvoiceForm';
+import Reports from './pages/reports/Reports/Reports';
 
 function App() {
   return (
