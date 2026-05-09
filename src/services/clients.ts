@@ -23,8 +23,9 @@ async function doRefresh(): Promise<string | null> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return null;
 
+  const baseURL = import.meta.env.VITE_API_URL ?? '/api';
   try {
-    const res = await fetch('/api/auth/refresh', {
+    const res = await fetch(`${baseURL}/auth/refresh`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${refreshToken}` },
     });
@@ -44,7 +45,7 @@ async function doRefresh(): Promise<string | null> {
 }
 
 const client = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL ?? '/api',
   headers: { 'Content-Type': 'application/json' },
 });
 
