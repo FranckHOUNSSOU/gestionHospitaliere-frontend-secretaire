@@ -1,5 +1,5 @@
 import { BarChart3, Users, CalendarDays, BedDouble, Receipt, Download } from 'lucide-react';
-import { patients, appointments, admissions, invoices, departments } from '../../../services/mockData';
+import { patients, appointments, invoices, departments } from '../../../services/mockData';
 import { BarGroup } from './BarGroup';
 
 const monthlyPatients     = [12, 18, 15, 22, 8, 14, 19, 25, 17, 21, 16, 24];

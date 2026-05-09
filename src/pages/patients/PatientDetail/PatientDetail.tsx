@@ -107,8 +107,8 @@ export default function PatientDetail() {
                 <InfoRow label="Date de naissance" value={new Date(patient.dateOfBirth).toLocaleDateString('fr-FR')} />
                 <InfoRow label="Sexe" value={patient.gender === 'M' ? 'Masculin' : 'Féminin'} />
                 <InfoRow label="Groupe sanguin" value={patient.bloodType} />
-                <InfoRow label="Ville" value={patient.city} />
-                <InfoRow label="Adresse" value={patient.address} />
+                <InfoRow label="Ville" value={patient.city ?? '—'} />
+                <InfoRow label="Adresse" value={patient.address ?? '—'} />
               </div>
               <div>
                 <p className="adm-sec-h">Contact</p>

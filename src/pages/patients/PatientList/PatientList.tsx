@@ -36,7 +36,7 @@ export default function PatientList() {
       p.firstName.toLowerCase().includes(q) ||
       p.lastName.toLowerCase().includes(q) ||
       p.phone.includes(q) ||
-      p.insuranceNumber.toLowerCase().includes(q);
+      (p.insuranceNumber ?? '').toLowerCase().includes(q);
     const matchStatus = statusFilter === 'all' || p.status === statusFilter;
     const matchGender = genderFilter === 'all' || p.gender === genderFilter;
     return matchSearch && matchStatus && matchGender;
