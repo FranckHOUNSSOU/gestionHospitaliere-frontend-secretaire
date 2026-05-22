@@ -1,12 +1,12 @@
 import './AppointmentList.css';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Plus, List, CalendarDays, Search, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import Badge, { statusBadge } from '../../../components/ui/Badge/Badge';
-import { appointments } from '../../../services/mockData';
+import { getRendezVous } from '../../../services/appointmentService';
 import { useNavigation } from '../../../context/NavigationContext';
 import type { AppointmentStatus, Appointment } from '../../../types/index';
 
@@ -134,10 +134,20 @@ export default function AppointmentList() {
   const { navigate } = useNavigation();
   const [view, setView] = useState<'list' | 'calendar'>('calendar');
   const [calView, setCalView] = useState<string>(Views.MONTH);
-  const [calDate, setCalDate] = useState(new Date(2026, 3, 17));
+  const [calDate, setCalDate] = useState(new Date());
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | 'all'>('all');
   const [selected, setSelected] = useState<Appointment | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    getRendezVous()
+      .then(({ data }) => setAppointments(data))
+      .catch(() => setAppointments([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   /* Données filtrées (vue liste) */
   const filtered = useMemo(() => {
@@ -152,10 +162,10 @@ export default function AppointmentList() {
         return matchSearch && matchStatus;
       })
       .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
-  }, [search, statusFilter]);
+  }, [search, statusFilter, appointments]);
 
   /* Tous les événements calendrier */
-  const events = useMemo(() => appointments.map(toEvent), []);
+  const events = useMemo(() => appointments.map(toEvent), [appointments]);
 
   /* Style par événement */
   const eventPropGetter = useCallback((event: CalEvent) => {
@@ -251,7 +261,13 @@ export default function AppointmentList() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--c-t3)' }}>
+                      Chargement…
+                    </td>
+                  </tr>
+                ) : filtered.length === 0 ? (
                   <tr>
                     <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--c-t3)' }}>
                       Aucun rendez-vous trouvé
