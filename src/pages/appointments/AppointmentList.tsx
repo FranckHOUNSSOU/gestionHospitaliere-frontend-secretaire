@@ -1,19 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, ChevronLeft, ChevronRight, List, CalendarDays } from 'lucide-react';
 import Badge, { statusBadge } from '../../components/ui/Badge';
-import { appointments } from '../../services/mockData';
+import { getRendezVous } from '../../services/appointmentService';
 import { useNavigation } from '../../context/NavigationContext';
-import type { AppointmentStatus } from '../../types/index';
+import type { Appointment, AppointmentStatus } from '../../types/index';
 
-const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+const DAYS   = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
 export default function AppointmentList() {
   const { navigate } = useNavigation();
-  const [view, setView] = useState<'list' | 'calendar'>('list');
-  const [search, setSearch] = useState('');
+  const [view, setView]               = useState<'list' | 'calendar'>('list');
+  const [search, setSearch]           = useState('');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | 'all'>('all');
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 3, 1));
+  const [currentDate, setCurrentDate] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading]         = useState(false);
+
+  const loadAppointments = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await getRendezVous();
+      setAppointments(data);
+    } catch {
+      setAppointments([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadAppointments(); }, [loadAppointments]);
 
   const filtered = appointments.filter((a) => {
     const q = search.toLowerCase();
@@ -47,6 +63,7 @@ export default function AppointmentList() {
   }
 
   const calendarDays = getCalendarDays();
+  const today = new Date();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -98,7 +115,9 @@ export default function AppointmentList() {
                 </tr>
               </thead>
               <tbody>
-                {sorted.length === 0 ? (
+                {loading ? (
+                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--c-t3)' }}>Chargement…</td></tr>
+                ) : sorted.length === 0 ? (
                   <tr><td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--c-t3)' }}>Aucun rendez-vous trouvé</td></tr>
                 ) : (
                   sorted.map((appt) => {
@@ -140,18 +159,19 @@ export default function AppointmentList() {
             </div>
           </div>
           <div className="adm-card-body">
-            {/* Days header */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '4px' }}>
               {DAYS.map((d) => (
                 <div key={d} style={{ textAlign: 'center', fontSize: '10.5px', fontWeight: 700, color: 'var(--c-t3)', padding: '4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{d}</div>
               ))}
             </div>
-            {/* Calendar grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
               {calendarDays.map((day, i) => {
                 if (!day) return <div key={i} style={{ minHeight: '76px' }} />;
                 const dayAppts = getApptForDay(day);
-                const isToday = day === 17 && currentDate.getMonth() === 3 && currentDate.getFullYear() === 2026;
+                const isToday =
+                  day === today.getDate() &&
+                  currentDate.getMonth() === today.getMonth() &&
+                  currentDate.getFullYear() === today.getFullYear();
                 return (
                   <div key={i} className={`adm-cal-cell${isToday ? ' adm-cal-cell--today' : ''}`}>
                     <p className="adm-cal-day">{day}</p>
