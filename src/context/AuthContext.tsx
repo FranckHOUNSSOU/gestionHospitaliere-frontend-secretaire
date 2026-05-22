@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   const login = async (data: LoginFormData) => {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch(`${import.meta.env.VITE_API_URL ?? '/api'}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: data.email, motDePasse: data.password }),

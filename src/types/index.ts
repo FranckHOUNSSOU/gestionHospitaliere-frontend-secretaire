@@ -1,6 +1,6 @@
 export type PatientStatus = 'active' | 'hospitalized' | 'discharged';
 export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
-export type AdmissionStatus = 'active' | 'discharged' | 'transferred';
+export type AdmissionStatus = 'active' | 'discharged' | 'transferred'| 'hospitalised';
 export type InvoiceStatus = 'draft' | 'pending' | 'partial' | 'paid' | 'overdue';
 
 export interface Patient {
@@ -101,7 +101,9 @@ export interface Department {
 
 export type Page =
   | 'dashboard' | 'patients' | 'patient-detail' | 'patient-new' | 'patient-edit'
-  | 'admissions' | 'admission-new' | 'appointments' | 'appointment-new'
+  | 'admissions' | 'admission-new' | 'admission-discharge'
+  | 'patient-file'
+  | 'appointments' | 'appointment-new'
   | 'billing' | 'billing-detail' | 'billing-new' | 'reports';
 
 export interface NavigationState {

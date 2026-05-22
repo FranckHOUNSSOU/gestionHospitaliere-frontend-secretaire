@@ -1,0 +1,348 @@
+/* ═══════════════════════════════════════════════════════════
+   CALENDAR (appointment view)
+   ═══════════════════════════════════════════════════════════ */
+.adm-cal-cell {
+  border: 1px solid var(--c-bdr) !important;
+  border-radius: 6px !important;
+  padding: 4px !important;
+  min-height: 76px !important;
+  background: var(--c-surf) !important;
+}
+
+.adm-cal-cell--today {
+  border-color: var(--c-accent) !important;
+  background: var(--c-accent-bg) !important;
+}
+
+.adm-cal-day {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--c-t2) !important;
+  margin-bottom: 3px !important;
+  line-height: 1 !important;
+}
+
+.adm-cal-cell--today .adm-cal-day { color: var(--c-accent) !important; }
+
+.adm-cal-event {
+  border-radius: 3px !important;
+  padding: 2px 4px !important;
+  margin-bottom: 2px !important;
+  font-size: 9px !important;
+  font-weight: 500 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: #fff !important;
+}
+
+.adm-ce-blue   { background: var(--c-accent) !important; }
+.adm-ce-green  { background: var(--c-green)  !important; }
+.adm-ce-red    { background: var(--c-red)    !important; }
+.adm-ce-gray   { background: var(--c-t3)     !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   REACT-BIG-CALENDAR — surcharge du thème design system
+   ═══════════════════════════════════════════════════════════ */
+
+/* Conteneur scoped */
+.adm-rbc-wrap .rbc-calendar {
+  font-family: 'Roboto', system-ui, sans-serif !important;
+  font-size: 12.5px !important;
+  background: var(--c-surf) !important;
+  color: var(--c-t0) !important;
+}
+
+/* Grille mois */
+.adm-rbc-wrap .rbc-month-view {
+  border: none !important;
+  background: var(--c-surf) !important;
+}
+
+.adm-rbc-wrap .rbc-month-row {
+  border-color: var(--c-bdr) !important;
+}
+
+.adm-rbc-wrap .rbc-day-bg {
+  background: var(--c-surf) !important;
+  transition: background 0.1s;
+}
+
+.adm-rbc-wrap .rbc-day-bg:hover {
+  background: var(--c-surf2) !important;
+}
+
+.adm-rbc-wrap .rbc-off-range-bg {
+  background: var(--c-surf2) !important;
+}
+
+.adm-rbc-wrap .rbc-off-range {
+  color: var(--c-t3) !important;
+}
+
+/* Header jours de la semaine */
+.adm-rbc-wrap .rbc-header {
+  padding: 8px 6px !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.6px !important;
+  color: var(--c-t3) !important;
+  background: var(--c-surf2) !important;
+  border-color: var(--c-bdr) !important;
+}
+
+.adm-rbc-wrap .rbc-header + .rbc-header {
+  border-left-color: var(--c-bdr) !important;
+}
+
+/* Numéro de jour */
+.adm-rbc-wrap .rbc-date-cell {
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--c-t2) !important;
+  text-align: right !important;
+}
+
+.adm-rbc-wrap .rbc-date-cell.rbc-now {
+  color: var(--c-accent) !important;
+}
+
+/* Jour courant */
+.adm-rbc-wrap .rbc-today {
+  background: rgba(14, 165, 233, 0.07) !important;
+}
+
+/* Événements */
+.adm-rbc-wrap .rbc-event {
+  border-radius: 5px !important;
+  padding: 2px 6px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  outline: none !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15) !important;
+  transition: opacity 0.15s !important;
+}
+
+.adm-rbc-wrap .rbc-event:hover {
+  opacity: 0.88 !important;
+}
+
+.adm-rbc-wrap .rbc-event:focus {
+  outline: 2px solid var(--c-accent) !important;
+  outline-offset: 1px !important;
+}
+
+.adm-rbc-wrap .rbc-event.rbc-selected {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--c-accent) !important;
+}
+
+/* Popup "show more" */
+.adm-rbc-wrap .rbc-show-more {
+  font-size: 10px !important;
+  color: var(--c-accent) !important;
+  font-weight: 600 !important;
+  background: transparent !important;
+  padding: 1px 6px !important;
+}
+
+/* Vue semaine / jour */
+.adm-rbc-wrap .rbc-time-view {
+  border: none !important;
+  background: var(--c-surf) !important;
+}
+
+.adm-rbc-wrap .rbc-time-header {
+  border-color: var(--c-bdr) !important;
+}
+
+.adm-rbc-wrap .rbc-time-header-content {
+  border-left-color: var(--c-bdr) !important;
+}
+
+.adm-rbc-wrap .rbc-time-content {
+  border-top-color: var(--c-bdr) !important;
+}
+
+.adm-rbc-wrap .rbc-time-content > * + * > * {
+  border-left-color: var(--c-bdr) !important;
+}
+
+.adm-rbc-wrap .rbc-timeslot-group {
+  border-bottom-color: var(--c-bdr) !important;
+  min-height: 48px !important;
+}
+
+.adm-rbc-wrap .rbc-time-slot {
+  border-top-color: var(--c-surf3) !important;
+}
+
+.adm-rbc-wrap .rbc-time-gutter .rbc-timeslot-group {
+  background: var(--c-surf2) !important;
+}
+
+.adm-rbc-wrap .rbc-label {
+  font-size: 10.5px !important;
+  color: var(--c-t3) !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  padding: 2px 6px !important;
+}
+
+.adm-rbc-wrap .rbc-day-slot .rbc-time-slot {
+  border-top-color: var(--c-surf3) !important;
+}
+
+.adm-rbc-wrap .rbc-current-time-indicator {
+  background: var(--c-red) !important;
+  height: 2px !important;
+}
+
+.adm-rbc-wrap .rbc-current-time-indicator::before {
+  content: '' !important;
+  display: block !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: var(--c-red) !important;
+  position: absolute !important;
+  left: -4px !important;
+  top: -3px !important;
+}
+
+/* Sélection de slot */
+.adm-rbc-wrap .rbc-slot-selection {
+  background: rgba(14, 165, 233, 0.18) !important;
+  border: 1px solid var(--c-accent) !important;
+  border-radius: 5px !important;
+}
+
+/* Vue agenda */
+.adm-rbc-wrap .rbc-agenda-view table {
+  border-color: var(--c-bdr) !important;
+  font-size: 12.5px !important;
+}
+
+.adm-rbc-wrap .rbc-agenda-view table thead {
+  background: var(--c-surf2) !important;
+}
+
+.adm-rbc-wrap .rbc-agenda-view table thead th {
+  padding: 8px 12px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.7px !important;
+  color: var(--c-t2) !important;
+  border-bottom: 1px solid var(--c-bdr) !important;
+}
+
+.adm-rbc-wrap .rbc-agenda-date-cell,
+.adm-rbc-wrap .rbc-agenda-time-cell,
+.adm-rbc-wrap .rbc-agenda-event-cell {
+  padding: 10px 14px !important;
+  color: var(--c-t1) !important;
+  border-bottom: 1px solid var(--c-bdr) !important;
+  vertical-align: middle !important;
+}
+
+.adm-rbc-wrap .rbc-agenda-date-cell {
+  font-weight: 600 !important;
+  color: var(--c-t0) !important;
+  white-space: nowrap !important;
+  background: var(--c-surf2) !important;
+}
+
+.adm-rbc-wrap .rbc-agenda-time-cell {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 11px !important;
+  color: var(--c-t2) !important;
+  white-space: nowrap !important;
+}
+
+.adm-rbc-wrap .rbc-agenda-event-cell .rbc-event {
+  border-radius: 4px !important;
+  padding: 3px 8px !important;
+}
+
+/* Lignes alternées agenda */
+.adm-rbc-wrap .rbc-agenda-view tbody > tr:nth-child(odd) td {
+  background: var(--c-surf) !important;
+}
+
+.adm-rbc-wrap .rbc-agenda-view tbody > tr:nth-child(even) td {
+  background: var(--c-surf2) !important;
+}
+
+/* Popup overlay */
+.adm-rbc-wrap .rbc-overlay {
+  background: var(--c-surf) !important;
+  border: 1px solid var(--c-bdr) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+  padding: 10px !important;
+  z-index: 100 !important;
+}
+
+.adm-rbc-wrap .rbc-overlay-header {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--c-t2) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  padding: 0 4px 8px !important;
+  border-bottom: 1px solid var(--c-bdr) !important;
+  margin-bottom: 6px !important;
+}
+
+/* Mode sombre — ajustements automatiques via variables CSS */
+.adm[data-theme="dark"] .adm-rbc-wrap .rbc-day-bg:hover {
+  background: var(--c-surf3) !important;
+}
+
+.adm[data-theme="dark"] .adm-rbc-wrap .rbc-event {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4) !important;
+}
+/* ═══════════════════════════════════════════════════════════
+   CALENDAR (appointment view)
+   ═══════════════════════════════════════════════════════════ */
+.adm-cal-cell {
+  border: 1px solid var(--c-bdr) !important;
+  border-radius: 6px !important;
+  padding: 4px !important;
+  min-height: 76px !important;
+  background: var(--c-surf) !important;
+}
+
+.adm-cal-cell--today {
+  border-color: var(--c-accent) !important;
+  background: var(--c-accent-bg) !important;
+}
+
+.adm-cal-day {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--c-t2) !important;
+  margin-bottom: 3px !important;
+  line-height: 1 !important;
+}
+
+.adm-cal-cell--today .adm-cal-day { color: var(--c-accent) !important; }
+
+.adm-cal-event {
+  border-radius: 3px !important;
+  padding: 2px 4px !important;
+  margin-bottom: 2px !important;
+  font-size: 9px !important;
+  font-weight: 500 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: #fff !important;
+}
+
+.adm-ce-blue   { background: var(--c-accent) !important; }
+.adm-ce-green  { background: var(--c-green)  !important; }
+.adm-ce-red    { background: var(--c-red)    !important; }
+.adm-ce-gray   { background: var(--c-t3)     !important; }
+

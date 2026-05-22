@@ -1,0 +1,59 @@
+/* Activity logs */
+.adm-log {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--c-bdr);
+}
+.adm-log:last-child { border-bottom: none; }
+
+.adm-log-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.adm-ld-green { background: var(--c-green) !important; }
+.adm-ld-blue  { background: var(--c-accent) !important; }
+.adm-ld-amber { background: var(--c-amber) !important; }
+.adm-ld-red   { background: var(--c-red) !important; }
+
+.adm-log-msg {
+  font-size: 12px !important;
+  color: var(--c-t1) !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+}
+.adm-log-msg strong { color: var(--c-t0) !important; font-weight: 600 !important; }
+.adm-log-time {
+  font-size: 10.5px !important;
+  color: var(--c-t3) !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  margin-top: 3px !important;
+  line-height: 1 !important;
+}
+
+/* Services list */
+.adm-svc {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--c-bdr);
+}
+.adm-svc:last-child { border-bottom: none; }
+.adm-svc-name { font-size: 12px !important; color: var(--c-t1) !important; }
+
+/* Stat mini widget */
+.adm-stat-mini {
+  background: var(--c-surf2) !important;
+  border: 1px solid var(--c-bdr) !important;
+  border-radius: 8px !important;
+  padding: 10px 14px !important;
+  text-align: center !important;
+}
+.adm-stat-mini-val { font-size: 20px !important; font-weight: 700 !important; color: var(--c-t0) !important; line-height: 1 !important; margin-bottom: 3px !important; }
+.adm-stat-mini-lbl { font-size: 10px !important; color: var(--c-t3) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; }
