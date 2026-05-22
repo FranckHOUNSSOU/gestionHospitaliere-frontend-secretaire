@@ -162,9 +162,11 @@ export default function AppointmentForm() {
                 <label className="adm-label">Patient *</label>
                 <div ref={dropdownRef} style={{ position: 'relative' }}>
                   <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <Search size={14} style={{
-                      position: 'absolute', left: '10px', color: 'var(--c-t3)', pointerEvents: 'none', flexShrink: 0,
-                    }} />
+                    {!selectedPatient && (
+                      <Search size={14} style={{
+                        position: 'absolute', left: '10px', color: 'var(--c-t3)', pointerEvents: 'none', flexShrink: 0,
+                      }} />
+                    )}
                     <input
                       type="text"
                       className="adm-input"
@@ -172,7 +174,7 @@ export default function AppointmentForm() {
                       value={patientQuery}
                       onChange={(e) => { setSelectedPatient(null); setPatientQuery(e.target.value); }}
                       onFocus={() => patientResults.length > 0 && setShowDropdown(true)}
-                      style={{ paddingLeft: '32px', paddingRight: selectedPatient ? '32px' : '10px' }}
+                      style={{ paddingLeft: selectedPatient ? '10px' : '32px', paddingRight: (patientQuery || selectedPatient) ? '32px' : '10px' }}
                     />
                     {(patientQuery || selectedPatient) && (
                       <button
