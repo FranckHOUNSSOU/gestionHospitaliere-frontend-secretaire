@@ -27,7 +27,7 @@ export function DoctorProvider({ children }: { children: ReactNode }) {
   async function fetchDoctors() {
     setLoading(true);
     try {
-      const params: Record<string, string> = { role: 'MEDECIN' };
+      const params: Record<string, string> = { role: 'MEDECIN', actif: 'true' };
       if (user?.poleId) params.poleId = user.poleId;
 
       const { data } = await client.get<Array<{

@@ -130,7 +130,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
   setMedecinsErr(null);
   client
     .get<Medecin[]>('/auth/users', {
-      params: { role: 'MEDECIN', serviceId: selectedService },
+      params: { role: 'MEDECIN', actif: 'true', serviceId: selectedService },
     })
     .then(res => setMedecins(res.data))
     .catch(() => setMedecinsErr('Impossible de charger les médecins du service.'))
