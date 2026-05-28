@@ -6,9 +6,25 @@ import { fr } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Plus, List, CalendarDays, Search, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import Badge, { statusBadge } from '../../../components/ui/Badge/Badge';
-import { getRendezVous } from '../../../services/appointmentService';
+import { getRendezVous, updateStatutRendezVous } from '../../../services/appointmentService';
 import { useNavigation } from '../../../context/NavigationContext';
 import type { AppointmentStatus, Appointment } from '../../../types/index';
+
+type StatusBackend = 'Confirme' | 'Annule' | 'Effectue' | 'Programme';
+
+const BACKEND_TO_FRONTEND: Record<StatusBackend, AppointmentStatus> = {
+  Programme: 'scheduled',
+  Confirme:  'confirmed',
+  Effectue:  'completed',
+  Annule:    'cancelled',
+};
+
+const STATUS_ACTIONS: { value: StatusBackend; label: string; color: string }[] = [
+  { value: 'Confirme',  label: 'Confirmer', color: '#0ea5e9' },
+  { value: 'Programme', label: 'Planifier', color: '#64748b' },
+  { value: 'Effectue',  label: 'Terminé',   color: '#059669' },
+  { value: 'Annule',    label: 'Annuler',   color: '#dc2626' },
+];
 
 /* ── Localizer date-fns (semaine commence lundi) ─────────────── */
 const localizer = dateFnsLocalizer({
@@ -139,7 +155,8 @@ export default function AppointmentList() {
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | 'all'>('all');
   const [selected, setSelected] = useState<Appointment | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading,      setLoading]      = useState(false);
+  const [updatingId,   setUpdatingId]   = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -192,10 +209,24 @@ export default function AppointmentList() {
     return isToday ? { style: { backgroundColor: 'rgba(14,165,233,0.07)' } } : {};
   }, []);
 
+  const handleStatusChange = useCallback(async (id: string, statut: StatusBackend) => {
+    setUpdatingId(id);
+    try {
+      await updateStatutRendezVous(id, statut);
+      const newStatus = BACKEND_TO_FRONTEND[statut];
+      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
+      setSelected(prev => prev?.id === id ? { ...prev, status: newStatus } : prev);
+    } catch { /* silent */ } finally {
+      setUpdatingId(null);
+    }
+  }, []);
+
   const onSelectEvent = useCallback((e: CalEvent) => setSelected(e.resource), []);
   const onSelectSlot  = useCallback((slotInfo: { start: Date | string }) => {
     const d = slotInfo.start instanceof Date ? slotInfo.start : new Date(slotInfo.start);
-    navigate('appointment-new', undefined, { prefillDate: d.toISOString().slice(0, 10) });
+    // Utiliser les composantes locales pour éviter le décalage UTC
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    navigate('appointment-new', undefined, { prefillDate: dateStr });
   }, [navigate]);
 
   return (
@@ -261,24 +292,26 @@ export default function AppointmentList() {
                   <th>Type</th>
                   <th>Durée</th>
                   <th>Statut</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--c-t3)' }}>
+                    <td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: 'var(--c-t3)' }}>
                       Chargement…
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--c-t3)' }}>
+                    <td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: 'var(--c-t3)' }}>
                       Aucun rendez-vous trouvé
                     </td>
                   </tr>
                 ) : (
                   filtered.map((appt) => {
                     const { variant, label } = statusBadge(appt.status);
+                    const isBusy = updatingId === appt.id;
                     return (
                       <tr key={appt.id}>
                         <td>
@@ -303,6 +336,22 @@ export default function AppointmentList() {
                           </span>
                         </td>
                         <td><Badge variant={variant}>{label}</Badge></td>
+                        <td>
+                          {isBusy ? (
+                            <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid var(--c-bdr)', borderTopColor: 'var(--c-accent)', animation: 'spin 0.7s linear infinite' }} />
+                          ) : (
+                            <select
+                              value=""
+                              onChange={(e) => { if (e.target.value) handleStatusChange(appt.id, e.target.value as StatusBackend); }}
+                              style={{ fontSize: '11px', padding: '3px 5px', borderRadius: 5, border: '1px solid var(--c-bdr)', background: 'var(--c-surf2)', color: 'var(--c-t1)', cursor: 'pointer', outline: 'none' }}
+                            >
+                              <option value="">Changer…</option>
+                              {STATUS_ACTIONS.map(a => (
+                                <option key={a.value} value={a.value}>{a.label}</option>
+                              ))}
+                            </select>
+                          )}
+                        </td>
                       </tr>
                     );
                   })
@@ -441,6 +490,26 @@ export default function AppointmentList() {
                   )}
                   <div style={{ marginTop: 6 }}>
                     {(() => { const { variant, label } = statusBadge(selected.status); return <Badge variant={variant}>{label}</Badge>; })()}
+                  </div>
+                  <div style={{ marginTop: 10, borderTop: '1px solid var(--c-bdr)', paddingTop: 10 }}>
+                    <p style={{ fontSize: 10.5, color: 'var(--c-t3)', marginBottom: 6 }}>Changer le statut</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                      {STATUS_ACTIONS.map(({ value, label, color }) => (
+                        <button
+                          key={value}
+                          disabled={updatingId === selected.id}
+                          onClick={() => handleStatusChange(selected.id, value)}
+                          style={{
+                            fontSize: 11, padding: '4px 9px', borderRadius: 5,
+                            border: `1px solid ${color}`, background: 'transparent',
+                            color, cursor: 'pointer', fontFamily: 'Roboto, sans-serif',
+                            opacity: updatingId === selected.id ? 0.5 : 1,
+                          }}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
