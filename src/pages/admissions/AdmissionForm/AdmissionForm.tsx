@@ -11,7 +11,11 @@ interface Medecin {
   id: string;
   nom: string;
   prenom: string;
-  pole: string;
+}
+interface Service {
+  id: string;
+  nom: string;
+  code: string;
 }
 
 // Valeurs de l'enum ModeEntree côté backend
@@ -37,9 +41,14 @@ export default function AdmissionForm() {
   const { navigate }   = useNavigation();
   const { user }       = useAuth();
 
-  // Le pôle de l'agent connecté (champ s'appelait `service` dans le type TS,
-  // correspond à `pole` dans le backend après migration)
-  const poleAgent = user?.service ?? null;
+  const poleNom = user?.pole   ?? null;
+  const poleId  = user?.poleId ?? null;
+
+  // ── Services du pôle ─────────────────────────────────────────────────────────
+const [services,        setServices]        = useState<Service[]>([]);
+const [servicesLoading, setServicesLoading] = useState(false);
+const [servicesErr,     setServicesErr]     = useState<string | null>(null);
+const [selectedService, setSelectedService] = useState<string>(''); // id du service choisi
 
   // ── État du formulaire ────────────────────────────────────────────────────
   const [form, setForm] = useState({
@@ -98,16 +107,35 @@ export default function AdmissionForm() {
   const [medecinsLoading, setMedecinsLoading] = useState(false);
   const [medecinsErr,     setMedecinsErr]     = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!poleAgent) return;
-    setMedecinsLoading(true);
-    setMedecinsErr(null);
-    client
-      .get<Medecin[]>('/auth/users', { params: { role: 'MEDECIN', pole: poleAgent } })
-      .then(res => setMedecins(res.data))
-      .catch(() => setMedecinsErr('Impossible de charger les médecins du pôle.'))
-      .finally(() => setMedecinsLoading(false));
-  }, [poleAgent]);
+    // ── Chargement des services du pôle ──────────────────────────────────────────
+    useEffect(() => {
+      if (!poleId) return;
+      setServicesLoading(true);
+      setServicesErr(null);
+      setSelectedService('');
+      setMedecins([]);
+      client
+        .get<Service[]>('/services', { params: { poleId } })
+        .then(res => setServices(res.data))
+        .catch(() => setServicesErr('Impossible de charger les services du pôle.'))
+        .finally(() => setServicesLoading(false));
+    }, [poleId]);
+
+    useEffect(() => {
+  if (!selectedService) {
+    setMedecins([]);   // vide la liste si aucun service choisi
+    return;
+  }
+  setMedecinsLoading(true);
+  setMedecinsErr(null);
+  client
+    .get<Medecin[]>('/auth/users', {
+      params: { role: 'MEDECIN', serviceId: selectedService },
+    })
+    .then(res => setMedecins(res.data))
+    .catch(() => setMedecinsErr('Impossible de charger les médecins du service.'))
+    .finally(() => setMedecinsLoading(false));
+}, [selectedService]);
 
   // ── Sauvegarde ────────────────────────────────────────────────────────────
   const [saving,   setSaving]   = useState(false);
@@ -266,9 +294,40 @@ export default function AdmissionForm() {
                 <label className="adm-label">Pôle d'affectation</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: 'var(--c-surf2)', border: '1px solid var(--c-bdr)', borderRadius: '8px', fontSize: '13px', color: 'var(--c-t1)', fontWeight: 600 }}>
                   <BedDouble size={14} style={{ color: 'var(--c-primary)', flexShrink: 0 }} />
-                  {poleAgent ?? <span style={{ color: 'var(--c-t3)', fontWeight: 400 }}>Pôle non renseigné sur votre compte</span>}
+                  {poleNom ?? <span style={{ color: 'var(--c-t3)', fontWeight: 400 }}>Pôle non renseigné sur votre compte</span>}
                 </div>
-                {!poleAgent && (
+                {/* ── Champ Service (nouveau) ── */}
+                <div className="adm-form-field" style={{ marginTop: '12px' }}>
+                  <label className="adm-label">Service *</label>
+
+                  {servicesLoading ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: '13px', color: 'var(--c-t3)' }}>
+                      <Loader2 size={13} style={{ animation: 'spin 0.7s linear infinite' }} /> Chargement des services…
+                    </div>
+                  ) : servicesErr ? (
+                    <p style={{ fontSize: '12px', color: '#ef4444', margin: 0 }}>{servicesErr}</p>
+                  ) : !poleId ? (
+                    <p style={{ fontSize: '12px', color: '#f97316', margin: 0 }}>
+                      ⚠ Aucun pôle associé, impossible de lister les services.
+                    </p>
+                  ) : (
+                    <select
+                      value={selectedService}
+                      onChange={e => {
+                        setSelectedService(e.target.value);
+                        // Reset le médecin si on change de service
+                        setForm(f => ({ ...f, medecinResponsableId: '' }));
+                      }}
+                      className="adm-input"
+                    >
+                      <option value="">Sélectionner un service</option>
+                      {services.map(s => (
+                        <option key={s.id} value={s.id}>{s.nom}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+                {!poleId && (
                   <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#f97316' }}>
                     ⚠ Aucun pôle associé à votre compte. Contactez l'administrateur.
                   </p>
@@ -394,7 +453,8 @@ export default function AdmissionForm() {
               {[
                 { label: 'Patient', value: selectedPatient ? `${selectedPatient.prenom} ${selectedPatient.nom}` : '—' },
                 { label: 'IPP',     value: selectedPatient?.numeroIpp ?? '—' },
-                { label: 'Pôle',    value: poleAgent ?? '—' },
+                { label: 'Pôle',    value: poleNom ?? '—' },
+                { label: 'Service',  value: services.find(s => s.id === selectedService)?.nom ?? '—' },
                 { label: 'Médecin', value: selectedMedecin ? `Dr. ${selectedMedecin.prenom} ${selectedMedecin.nom}` : '—' },
                 { label: 'Mode',    value: form.modeEntree || '—' },
                 { label: 'Entrée',  value: form.dateAdmission ? new Date(form.dateAdmission).toLocaleDateString('fr-FR') : '—' },
