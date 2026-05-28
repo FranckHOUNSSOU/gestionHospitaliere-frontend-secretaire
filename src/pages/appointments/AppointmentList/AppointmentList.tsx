@@ -193,7 +193,10 @@ export default function AppointmentList() {
   }, []);
 
   const onSelectEvent = useCallback((e: CalEvent) => setSelected(e.resource), []);
-  const onSelectSlot  = useCallback(() => navigate('appointment-new'), [navigate]);
+  const onSelectSlot  = useCallback((slotInfo: { start: Date | string }) => {
+    const d = slotInfo.start instanceof Date ? slotInfo.start : new Date(slotInfo.start);
+    navigate('appointment-new', undefined, { prefillDate: d.toISOString().slice(0, 10) });
+  }, [navigate]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

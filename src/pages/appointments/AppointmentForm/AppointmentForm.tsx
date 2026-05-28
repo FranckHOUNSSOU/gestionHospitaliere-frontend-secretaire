@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ArrowLeft, Save, CalendarDays, Search, X } from 'lucide-react';
 import { useNavigation } from '../../../context/NavigationContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -18,6 +19,8 @@ export default function AppointmentForm() {
   const { navigate }   = useNavigation();
   const { user }       = useAuth();
   const { doctors }    = useDoctors();
+  const location       = useLocation();
+  const prefillDate    = (location.state as { prefillDate?: string } | null)?.prefillDate ?? '';
 
   // ── Patient combobox ──────────────────────────────────────────────────────
   const [patientQuery,    setPatientQuery]    = useState('');
@@ -31,7 +34,7 @@ export default function AppointmentForm() {
   // ── Formulaire ────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     serviceFilter: '', doctorId: '',
-    date: '', time: '', duration: '30', type: 'Consultation', notes: '',
+    date: prefillDate, time: '', duration: '30', type: 'Consultation', notes: '',
   });
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState<string | null>(null);
@@ -115,7 +118,7 @@ export default function AppointmentForm() {
         motif:         form.notes || undefined,
       });
       setSaved(true);
-      setTimeout(() => navigate('appointments'), 1200);
+      setTimeout(() => navigate('dashboard'), 1200);
     } catch (e: any) {
       setError(e?.message ?? 'Erreur lors de l\'enregistrement.');
     } finally {
