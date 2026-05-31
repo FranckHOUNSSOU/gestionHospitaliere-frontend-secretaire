@@ -1188,7 +1188,6 @@
   background: var(--c-surf) !important;
   border: 1px solid var(--c-bdr) !important;
   border-radius: 12px !important;
-  overflow: hidden !important;
 }
 
 .adm-form-section-head {

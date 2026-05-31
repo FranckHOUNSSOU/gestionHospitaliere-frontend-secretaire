@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Save, CalendarDays, Search, X } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { ArrowLeft, Save, CalendarDays, Search, X, Loader2 } from 'lucide-react';
 import { useNavigation } from '../../../context/NavigationContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useDoctors } from '../../../context/DoctorContext';
 import { createRendezVous } from '../../../services/appointmentService';
-import { rechercherPatients } from '../../../services/patientService';
-import type { PatientApi } from '../../../services/patientService';
+import { patientsData, type Patient } from '../../../services/patients';
 
 const timeSlots = [
   '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00',
@@ -18,11 +18,13 @@ export default function AppointmentForm() {
   const { navigate }   = useNavigation();
   const { user }       = useAuth();
   const { doctors }    = useDoctors();
+  const location       = useLocation();
+  const prefillDate    = (location.state as { prefillDate?: string } | null)?.prefillDate ?? '';
 
   // ── Patient combobox ──────────────────────────────────────────────────────
   const [patientQuery,    setPatientQuery]    = useState('');
-  const [patientResults,  setPatientResults]  = useState<PatientApi[]>([]);
-  const [selectedPatient, setSelectedPatient] = useState<PatientApi | null>(null);
+  const [patientResults,  setPatientResults]  = useState<Patient[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showDropdown,    setShowDropdown]    = useState(false);
   const [searching,       setSearching]       = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -31,7 +33,7 @@ export default function AppointmentForm() {
   // ── Formulaire ────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     serviceFilter: '', doctorId: '',
-    date: '', time: '', duration: '30', type: 'Consultation', notes: '',
+    date: prefillDate, time: '', duration: '30', type: 'Consultation', notes: '',
   });
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState<string | null>(null);
@@ -59,7 +61,7 @@ export default function AppointmentForm() {
     searchTimer.current = setTimeout(async () => {
       setSearching(true);
       try {
-        const { data } = await rechercherPatients(patientQuery);
+        const data = await patientsData.rechercher(patientQuery);
         setPatientResults(data);
         setShowDropdown(true);
       } catch {
@@ -70,7 +72,7 @@ export default function AppointmentForm() {
     }, 300);
   }, [patientQuery]);
 
-  function selectPatient(p: PatientApi) {
+  function selectPatient(p: Patient) {
     setSelectedPatient(p);
     setPatientQuery(`${p.prenom} ${p.nom} — ${p.numeroIpp}`);
     setShowDropdown(false);
@@ -115,7 +117,7 @@ export default function AppointmentForm() {
         motif:         form.notes || undefined,
       });
       setSaved(true);
-      setTimeout(() => navigate('appointments'), 1200);
+      setTimeout(() => navigate('dashboard'), 1200);
     } catch (e: any) {
       setError(e?.message ?? 'Erreur lors de l\'enregistrement.');
     } finally {
@@ -159,67 +161,69 @@ export default function AppointmentForm() {
 
               {/* Recherche patient */}
               <div className="adm-form-field">
-                <label className="adm-label">Patient *</label>
+                <label className="adm-label">Rechercher un patient (nom, prénom ou IPP) *</label>
                 <div ref={dropdownRef} style={{ position: 'relative' }}>
-                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <Search size={14} style={{
-                      position: 'absolute', left: '10px', color: 'var(--c-t3)', pointerEvents: 'none', flexShrink: 0,
-                    }} />
+                  <div className="adm-search" style={{ width: '100%' }}>
+                    <span className="adm-search-icon">
+                      {searching
+                        ? <Loader2 size={13} style={{ animation: 'spin 0.7s linear infinite' }} />
+                        : <Search size={13} />}
+                    </span>
                     <input
-                      type="text"
-                      className="adm-input"
-                      placeholder="Rechercher par nom ou IPP…"
+                      className="adm-search-input"
+                      placeholder="Ex : ZANMENOU ou IPP-2026-0004"
                       value={patientQuery}
                       onChange={(e) => { setSelectedPatient(null); setPatientQuery(e.target.value); }}
                       onFocus={() => patientResults.length > 0 && setShowDropdown(true)}
-                      style={{ paddingLeft: '32px', paddingRight: selectedPatient ? '32px' : '10px' }}
                     />
-                    {(patientQuery || selectedPatient) && (
+                    {patientQuery && (
                       <button
                         type="button"
                         onClick={clearPatient}
-                        style={{ position: 'absolute', right: '8px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-t3)', padding: '2px', display: 'flex' }}
+                        style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-t3)', display: 'flex', alignItems: 'center' }}
                       >
-                        <X size={14} />
+                        <X size={13} />
                       </button>
                     )}
                   </div>
 
                   {/* Dropdown résultats */}
-                  {showDropdown && (
-                    <div style={{
-                      position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 50,
-                      background: 'var(--c-surf)', border: '1px solid var(--c-bdr)',
-                      borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,.12)',
-                      maxHeight: '220px', overflowY: 'auto',
-                    }}>
-                      {searching ? (
-                        <div style={{ padding: '12px 14px', fontSize: '12px', color: 'var(--c-t3)' }}>Recherche…</div>
-                      ) : patientResults.length === 0 ? (
-                        <div style={{ padding: '12px 14px', fontSize: '12px', color: 'var(--c-t3)' }}>Aucun patient trouvé</div>
-                      ) : (
-                        patientResults.map((p) => (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onMouseDown={() => selectPatient(p)}
-                            style={{
-                              display: 'block', width: '100%', textAlign: 'left',
-                              padding: '9px 14px', background: 'none', border: 'none',
-                              cursor: 'pointer', borderBottom: '1px solid var(--c-bdr)',
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--c-surf2)')}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
-                          >
-                            <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'var(--c-t0)' }}>
+                  {showDropdown && patientResults.length > 0 && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--c-bg)', border: '1px solid var(--c-bdr)', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', marginTop: '4px', maxHeight: '240px', overflowY: 'auto' }}>
+                      {patientResults.map((p) => (
+                        <div
+                          key={p.id}
+                          onMouseDown={() => selectPatient(p)}
+                          style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid var(--c-bdr)', transition: 'background 0.1s' }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--c-surf2)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          <div style={{ width: 34, height: 34, borderRadius: '8px', background: 'linear-gradient(135deg,#60a5fa,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                            {p.prenom[0]}{p.nom[0]}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ margin: 0, fontWeight: 600, fontSize: '13px', color: 'var(--c-t1)' }}>
                               {p.prenom} {p.nom}
                             </p>
-                            <p style={{ margin: 0, fontSize: '11px', color: 'var(--c-t3)', fontFamily: 'monospace' }}>
-                              {p.numeroIpp}{p.telephoneMobile ? ` · ${p.telephoneMobile}` : ''}
+                            <p style={{ margin: 0, fontSize: '11px', color: 'var(--c-t3)' }}>
+                              {p.numeroIpp}
+                              {p.dateNaissance && ` · ${new Date(p.dateNaissance).toLocaleDateString('fr-FR')}`}
+                              {p.telephoneMobile && ` · ${p.telephoneMobile}`}
                             </p>
-                          </button>
-                        ))
-                      )}
+                          </div>
+                          {p.statutProfil === 'Incomplet' && (
+                            <span style={{ fontSize: '10px', background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', borderRadius: '99px', padding: '1px 7px', fontWeight: 600, flexShrink: 0 }}>
+                              Incomplet
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {showDropdown && patientResults.length === 0 && !searching && patientQuery.trim().length >= 2 && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--c-bg)', border: '1px solid var(--c-bdr)', borderRadius: '8px', padding: '16px', textAlign: 'center', fontSize: '13px', color: 'var(--c-t3)', marginTop: '4px' }}>
+                      Aucun patient trouvé
                     </div>
                   )}
                 </div>

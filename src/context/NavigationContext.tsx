@@ -5,7 +5,7 @@ import type { NavigationState, Page } from '../types/index';
 
 interface NavigationContextType {
   nav: NavigationState;
-  navigate: (page: Page, id?: string) => void;
+  navigate: (page: Page, id?: string, state?: Record<string, unknown>) => void;
 }
 
 const NavigationContext = createContext<NavigationContextType | null>(null);
@@ -69,10 +69,10 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
 
   const nav = useMemo(() => parsePage(location.pathname), [location.pathname]);
 
-  function navigate(page: Page, id?: string) {
+  function navigate(page: Page, id?: string, state?: Record<string, unknown>) {
     const pathOrFn = PAGE_PATHS[page];
     const path = typeof pathOrFn === 'function' ? pathOrFn(id ?? '') : pathOrFn;
-    routerNavigate(path);
+    routerNavigate(path, state ? { state } : undefined);
     window.scrollTo(0, 0);
   }
 
