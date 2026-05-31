@@ -18,3 +18,16 @@ export const getRendezVous = (debut?: string, fin?: string) =>
 
 export const updateStatutRendezVous = (id: string, statut: 'Confirme' | 'Annule' | 'Effectue' | 'Programme') =>
   client.patch<Appointment>(`/rendezvous/${id}/statut`, { statut });
+
+export interface UpdateRendezVousPayload {
+  dateHeure?: string;
+  dureeMinutes?: number;
+  type?: string;
+  motif?: string;
+}
+
+export const updateRendezVous = (id: string, payload: UpdateRendezVousPayload) =>
+  client.patch<Appointment>(`/rendezvous/${id}`, payload);
+
+export const deleteRendezVous = (id: string) =>
+  client.delete(`/rendezvous/${id}`);
