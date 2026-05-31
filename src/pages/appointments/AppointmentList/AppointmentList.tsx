@@ -1,5 +1,5 @@
 import './AppointmentList.css';
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -137,14 +137,7 @@ function EditModal({ appt, onClose, onSaved }: EditModalProps) {
         type:         form.type,
         motif:        form.notes || undefined,
       });
-      onSaved({
-        ...appt,
-        date:     form.date,
-        time:     form.time,
-        duration: Number(form.duration),
-        type:     form.type,
-        notes:    form.notes || undefined,
-      });
+      onSaved({ ...appt, date: form.date, time: form.time, duration: Number(form.duration), type: form.type, notes: form.notes || undefined });
     } catch (e: any) {
       setError(e?.message ?? 'Erreur lors de la modification.');
     } finally {
@@ -156,32 +149,21 @@ function EditModal({ appt, onClose, onSaved }: EditModalProps) {
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.45)' }}
          onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{ background: 'var(--c-bg)', borderRadius: 12, width: '100%', maxWidth: 520, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
-
-        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--c-bdr)' }}>
           <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: 'var(--c-t0)' }}>Modifier le rendez-vous</p>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-t3)', display: 'flex' }}><X size={18} /></button>
         </div>
-
         <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-
           {/* Infos non modifiables */}
           <div style={{ background: 'var(--c-surf2)', borderRadius: 8, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {[
-              { k: 'Patient',  v: appt.patientName },
-              { k: 'Médecin',  v: appt.doctorName },
-              { k: 'Service',  v: appt.department },
-            ].map(({ k, v }) => (
+            {[{ k: 'Patient', v: appt.patientName }, { k: 'Médecin', v: appt.doctorName }, { k: 'Service', v: appt.department }].map(({ k, v }) => (
               <div key={k} style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
                 <span style={{ fontSize: 11, color: 'var(--c-t3)', minWidth: 60 }}>{k}</span>
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-t1)' }}>{v || '—'}</span>
               </div>
             ))}
           </div>
-
           {error && <div className="adm-alert adm-alert-error">{error}</div>}
-
-          {/* Date + Durée */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div className="adm-form-field">
               <label className="adm-label">Date *</label>
@@ -199,39 +181,28 @@ function EditModal({ appt, onClose, onSaved }: EditModalProps) {
               </select>
             </div>
           </div>
-
-          {/* Créneaux horaires */}
           <div className="adm-form-field">
             <label className="adm-label">Créneau horaire *</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 5 }}>
               {TIME_SLOTS.map((t) => (
                 <button key={t} type="button" onClick={() => handleChange('time', t)}
                   className={form.time === t ? 'adm-btn adm-btn-primary' : 'adm-btn'}
-                  style={{ justifyContent: 'center', height: 28, fontSize: 11 }}>
-                  {t}
-                </button>
+                  style={{ justifyContent: 'center', height: 28, fontSize: 11 }}>{t}</button>
               ))}
             </div>
           </div>
-
-          {/* Type */}
           <div className="adm-form-field">
             <label className="adm-label">Type de consultation</label>
             <select className="adm-input" value={form.type} onChange={e => handleChange('type', e.target.value)}>
               {APPOINTMENT_TYPES.map(t => <option key={t}>{t}</option>)}
             </select>
           </div>
-
-          {/* Notes */}
           <div className="adm-form-field">
             <label className="adm-label">Notes / Motif</label>
             <textarea className="adm-input" rows={2} value={form.notes}
-              onChange={e => handleChange('notes', e.target.value)}
-              placeholder="Motif de consultation…" />
+              onChange={e => handleChange('notes', e.target.value)} placeholder="Motif de consultation…" />
           </div>
         </div>
-
-        {/* Footer */}
         <div style={{ display: 'flex', gap: 8, padding: '12px 20px', borderTop: '1px solid var(--c-bdr)', justifyContent: 'flex-end' }}>
           <button onClick={onClose} className="adm-btn" style={{ height: 36 }}>Annuler</button>
           <button onClick={handleSave} disabled={saving} className="adm-btn adm-btn-primary" style={{ height: 36, gap: 6 }}>
@@ -257,16 +228,11 @@ export default function AppointmentList() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading,    setLoading]    = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-
-  // Popover statut (liste)
-  const [openStatusId, setOpenStatusId] = useState<string | null>(null);
-  // Menu ⋮ (liste)
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  // Modal édition
   const [editingAppt, setEditingAppt] = useState<Appointment | null>(null);
 
-  const statusPopoverRef = useRef<HTMLDivElement>(null);
-  const menuPopoverRef   = useRef<HTMLDivElement>(null);
+  // Popovers en position fixe pour éviter le clipping du overflow de la table
+  const [statusPopover, setStatusPopover] = useState<{ id: string; top: number; left: number } | null>(null);
+  const [menuPopover,   setMenuPopover]   = useState<{ id: string; top: number; right: number } | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -278,10 +244,7 @@ export default function AppointmentList() {
 
   // Fermer les popovers au clic extérieur
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (statusPopoverRef.current && !statusPopoverRef.current.contains(e.target as Node)) setOpenStatusId(null);
-      if (menuPopoverRef.current   && !menuPopoverRef.current.contains(e.target as Node))   setOpenMenuId(null);
-    }
+    function handleClick() { setStatusPopover(null); setMenuPopover(null); }
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
@@ -311,7 +274,7 @@ export default function AppointmentList() {
   }, []);
 
   const handleStatusChange = useCallback(async (id: string, statut: StatusBackend) => {
-    setUpdatingId(id); setOpenStatusId(null);
+    setUpdatingId(id); setStatusPopover(null);
     try {
       await updateStatutRendezVous(id, statut);
       const newStatus = BACKEND_TO_FRONTEND[statut];
@@ -322,7 +285,7 @@ export default function AppointmentList() {
 
   const handleDelete = useCallback(async (id: string) => {
     if (!window.confirm('Supprimer ce rendez-vous ? Cette action est irréversible.')) return;
-    setOpenMenuId(null);
+    setMenuPopover(null);
     try {
       await deleteRendezVous(id);
       setAppointments(prev => prev.filter(a => a.id !== id));
@@ -347,8 +310,56 @@ export default function AppointmentList() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
       {/* Modal d'édition */}
-      {editingAppt && (
-        <EditModal appt={editingAppt} onClose={() => setEditingAppt(null)} onSaved={handleSaved} />
+      {editingAppt && <EditModal appt={editingAppt} onClose={() => setEditingAppt(null)} onSaved={handleSaved} />}
+
+      {/* Popover statut — position fixe, rendu hors table */}
+      {statusPopover && (
+        <div
+          onMouseDown={e => e.stopPropagation()}
+          style={{ position: 'fixed', top: statusPopover.top, left: statusPopover.left, zIndex: 500, background: 'var(--c-bg)', border: '1px solid var(--c-bdr)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', minWidth: 150, overflow: 'hidden' }}
+        >
+          {STATUS_ACTIONS.map(({ value, label, color }) => (
+            <button
+              key={value}
+              onClick={() => handleStatusChange(statusPopover.id, value)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 13px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--c-t1)', fontFamily: 'Roboto, sans-serif', textAlign: 'left' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--c-surf2)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+            >
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Popover menu ⋮ — position fixe */}
+      {menuPopover && (
+        <div
+          onMouseDown={e => e.stopPropagation()}
+          style={{ position: 'fixed', top: menuPopover.top, right: menuPopover.right, zIndex: 500, background: 'var(--c-bg)', border: '1px solid var(--c-bdr)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', minWidth: 140, overflow: 'hidden' }}
+        >
+          <button
+            onClick={() => {
+              const appt = appointments.find(a => a.id === menuPopover.id);
+              if (appt) setEditingAppt(appt);
+              setMenuPopover(null);
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--c-t1)', fontFamily: 'Roboto, sans-serif', textAlign: 'left' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--c-surf2)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+          >
+            Modifier
+          </button>
+          <button
+            onClick={() => handleDelete(menuPopover.id)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#dc2626', fontFamily: 'Roboto, sans-serif', textAlign: 'left' }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#fef2f2')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+          >
+            Supprimer
+          </button>
+        </div>
       )}
 
       {/* ── En-tête ── */}
@@ -406,96 +417,64 @@ export default function AppointmentList() {
                   <tr><td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: 'var(--c-t3)' }}>Chargement…</td></tr>
                 ) : filtered.length === 0 ? (
                   <tr><td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: 'var(--c-t3)' }}>Aucun rendez-vous trouvé</td></tr>
-                ) : (
-                  filtered.map((appt) => {
-                    const { variant, label } = statusBadge(appt.status);
-                    const isBusy = updatingId === appt.id;
-                    return (
-                      <tr key={appt.id}>
-                        <td>
-                          <p className="adm-cell-name">{appt.time}</p>
-                          <p className="adm-cell-mono">{new Date(appt.date).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}</p>
-                        </td>
-                        <td>
-                          <button onClick={() => navigate('patient-detail', appt.patientId)} className="adm-link-btn">{appt.patientName}</button>
-                        </td>
-                        <td><span style={{ fontSize: '12px', color: 'var(--c-t1)' }}>{appt.doctorName}</span></td>
-                        <td><span className="adm-cell-mono" style={{ fontSize: '12px', color: 'var(--c-t1)' }}>{appt.department}</span></td>
-                        <td><span className="adm-tag adm-t-gray">{appt.type}</span></td>
-                        <td>
-                          <span className="adm-cell-mono" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <Clock size={11} /> {appt.duration} min
-                          </span>
-                        </td>
+                ) : filtered.map((appt) => {
+                  const { variant, label } = statusBadge(appt.status);
+                  const isBusy = updatingId === appt.id;
+                  return (
+                    <tr key={appt.id}>
+                      <td>
+                        <p className="adm-cell-name">{appt.time}</p>
+                        <p className="adm-cell-mono">{new Date(appt.date).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                      </td>
+                      <td>
+                        <button onClick={() => navigate('patient-detail', appt.patientId)} className="adm-link-btn">{appt.patientName}</button>
+                      </td>
+                      <td><span style={{ fontSize: '12px', color: 'var(--c-t1)' }}>{appt.doctorName}</span></td>
+                      <td><span className="adm-cell-mono" style={{ fontSize: '12px', color: 'var(--c-t1)' }}>{appt.department}</span></td>
+                      <td><span className="adm-tag adm-t-gray">{appt.type}</span></td>
+                      <td>
+                        <span className="adm-cell-mono" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Clock size={11} /> {appt.duration} min
+                        </span>
+                      </td>
 
-                        {/* ── Statut cliquable ── */}
-                        <td>
-                          {isBusy ? (
-                            <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid var(--c-bdr)', borderTopColor: 'var(--c-accent)', animation: 'spin 0.7s linear infinite' }} />
-                          ) : (
-                            <div style={{ position: 'relative', display: 'inline-block' }} ref={openStatusId === appt.id ? statusPopoverRef : undefined}>
-                              <button
-                                onClick={() => setOpenStatusId(prev => prev === appt.id ? null : appt.id)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                              >
-                                <Badge variant={variant}>{label}</Badge>
-                              </button>
-                              {openStatusId === appt.id && (
-                                <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 200, marginTop: 4, background: 'var(--c-bg)', border: '1px solid var(--c-bdr)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', minWidth: 140, overflow: 'hidden' }}>
-                                  {STATUS_ACTIONS.map(({ value, label: lbl, color }) => (
-                                    <button
-                                      key={value}
-                                      onClick={() => handleStatusChange(appt.id, value)}
-                                      style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--c-t1)', fontFamily: 'Roboto, sans-serif', textAlign: 'left' }}
-                                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--c-surf2)')}
-                                      onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-                                    >
-                                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
-                                      {lbl}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </td>
+                      {/* Statut cliquable */}
+                      <td>
+                        {isBusy ? (
+                          <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid var(--c-bdr)', borderTopColor: 'var(--c-accent)', animation: 'spin 0.7s linear infinite' }} />
+                        ) : (
+                          <button
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setStatusPopover(prev => prev?.id === appt.id ? null : { id: appt.id, top: rect.bottom + 4, left: rect.left });
+                              setMenuPopover(null);
+                            }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                          >
+                            <Badge variant={variant}>{label}</Badge>
+                          </button>
+                        )}
+                      </td>
 
-                        {/* ── Menu ⋮ ── */}
-                        <td style={{ textAlign: 'center' }}>
-                          <div style={{ position: 'relative', display: 'inline-block' }} ref={openMenuId === appt.id ? menuPopoverRef : undefined}>
-                            <button
-                              onClick={() => setOpenMenuId(prev => prev === appt.id ? null : appt.id)}
-                              className="adm-icon-btn"
-                              style={{ width: 30, height: 30 }}
-                            >
-                              <MoreVertical size={14} />
-                            </button>
-                            {openMenuId === appt.id && (
-                              <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 200, marginTop: 4, background: 'var(--c-bg)', border: '1px solid var(--c-bdr)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', minWidth: 130, overflow: 'hidden' }}>
-                                <button
-                                  onClick={() => { setEditingAppt(appt); setOpenMenuId(null); }}
-                                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--c-t1)', fontFamily: 'Roboto, sans-serif', textAlign: 'left' }}
-                                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--c-surf2)')}
-                                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-                                >
-                                  ✏️ Modifier
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(appt.id)}
-                                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#dc2626', fontFamily: 'Roboto, sans-serif', textAlign: 'left' }}
-                                  onMouseEnter={e => (e.currentTarget.style.background = '#fef2f2')}
-                                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-                                >
-                                  🗑️ Supprimer
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
+                      {/* Menu ⋮ */}
+                      <td style={{ textAlign: 'center' }}>
+                        <button
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setMenuPopover(prev => prev?.id === appt.id ? null : { id: appt.id, top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                            setStatusPopover(null);
+                          }}
+                          className="adm-icon-btn"
+                          style={{ width: 30, height: 30 }}
+                        >
+                          <MoreVertical size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -530,7 +509,6 @@ export default function AppointmentList() {
 
           {/* Panneau latéral */}
           <div style={{ width: 248, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-
             {/* Légende */}
             <div className="adm-card">
               <div className="adm-card-head"><p className="adm-card-title">Légende</p></div>
@@ -558,9 +536,7 @@ export default function AppointmentList() {
                       color: statusFilter === s ? 'var(--c-accent)' : 'var(--c-t1)',
                       cursor: 'pointer', fontSize: 12, fontWeight: statusFilter === s ? 600 : 400,
                       fontFamily: 'Roboto, sans-serif', transition: 'all 0.15s',
-                    }}>
-                      {lbl[s]}
-                    </button>
+                    }}>{lbl[s]}</button>
                   );
                 })}
               </div>
@@ -597,7 +573,6 @@ export default function AppointmentList() {
                   <div style={{ marginTop: 6 }}>
                     {(() => { const { variant, label } = statusBadge(selected.status); return <Badge variant={variant}>{label}</Badge>; })()}
                   </div>
-                  {/* Changement de statut */}
                   <div style={{ marginTop: 10, borderTop: '1px solid var(--c-bdr)', paddingTop: 10 }}>
                     <p style={{ fontSize: 10.5, color: 'var(--c-t3)', marginBottom: 6 }}>Changer le statut</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
@@ -610,13 +585,12 @@ export default function AppointmentList() {
                       ))}
                     </div>
                   </div>
-                  {/* Actions */}
                   <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
                     <button onClick={() => setEditingAppt(selected)} className="adm-btn" style={{ flex: 1, height: 32, fontSize: 11, justifyContent: 'center' }}>
-                      ✏️ Modifier
+                      Modifier
                     </button>
                     <button onClick={() => handleDelete(selected.id)} style={{ flex: 1, height: 32, fontSize: 11, borderRadius: 6, border: '1px solid #dc2626', background: 'transparent', color: '#dc2626', cursor: 'pointer', fontFamily: 'Roboto, sans-serif' }}>
-                      🗑️ Supprimer
+                      Supprimer
                     </button>
                   </div>
                 </div>
