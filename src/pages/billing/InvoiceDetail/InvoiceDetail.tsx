@@ -59,14 +59,6 @@ function TRow({ cols, template = '3fr 1fr 1fr 1fr' }: { cols: (string | number)[
   );
 }
 
-function SousTotal({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 24, padding: '5px 10px', background: color + '0a', borderTop: `1px solid ${color}40` }}>
-      <span style={{ fontSize: 10, color, fontWeight: 600, textTransform: 'uppercase' }}>{label}</span>
-      <span style={{ fontSize: 11, color, fontWeight: 700, fontVariantNumeric: 'tabular-nums', minWidth: 120, textAlign: 'right' }}>{fmt(value)}</span>
-    </div>
-  );
-}
 
 function Vide() {
   return <p style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic', padding: '6px 10px', margin: 0 }}>Aucune prestation — 0 FCFA</p>;
@@ -141,7 +133,7 @@ export default function InvoiceDetail() {
 
           {/* Gauche */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textAlign: 'center' }}>
-            <img src="/benin%20embl%C3%A8me.png" alt="Armoiries du Bénin" style={{ height: 72, objectFit: 'contain' }} />
+            <img src="/benin%20embl%C3%A8me.png" alt="Armoiries du Bénin" style={{ height: 115, objectFit: 'contain' }} />
             
           </div>
 
@@ -149,10 +141,9 @@ export default function InvoiceDetail() {
           <div style={{ textAlign: 'center' }}>
             <p style={{ margin: 0, fontSize: 10, fontWeight: 800, color: '#1e3a5f', lineHeight: 1.6, textTransform: 'uppercase' }}>
               CENTRE HOSPITALIER UNIVERSITAIRE<br />
-              DE LA MÈRE ET DE L'ENFANT-LAGUNE
-            </p>
-            <p style={{ margin: '3px 0 0', fontSize: 13, fontWeight: 900, color: '#1e3a5f', letterSpacing: '0.12em' }}>
-              (CHU-MEL) ★★★★★
+              DE LA MÈRE ET DE L'ENFANT-LAGUNE <br />
+              (CHU-MEL) <br />
+              *****
             </p>
           </div>
 
@@ -205,7 +196,7 @@ export default function InvoiceDetail() {
 
         {/* ══ SECTION HOSPITALISATION ══ */}
         <div style={{ marginBottom: 10 }}>
-          <SectionHeader color="#4f46e5" title="I. Hospitalisation" total={apercu.totalHospitalisation} />
+          <SectionHeader color="#1e3a5f" title="Hospitalisation" total={apercu.totalHospitalisation} />
           {apercu.lignesHospitalisation.length === 0 ? <Vide /> : (
             <>
               <THead cols={['Description / Service / Chambre', 'Jours', 'Prix/jour', 'Montant']} />
@@ -214,12 +205,11 @@ export default function InvoiceDetail() {
               ))}
             </>
           )}
-          <SousTotal label="Sous-total hospitalisation" value={apercu.totalHospitalisation} color="#4f46e5" />
         </div>
 
         {/* ══ SECTION CONSULTATIONS ══ */}
         <div style={{ marginBottom: 10 }}>
-          <SectionHeader color="#0284c7" title="II. Consultations et rendez-vous" total={apercu.totalConsultations} />
+          <SectionHeader color="#1e3a5f" title="Consultations et rendez-vous" total={apercu.totalConsultations} />
           {apercu.consultations.length === 0 ? <Vide /> : (
             <>
               <THead cols={['Type / Médecin', 'Date', 'Statut', 'Tarif']} />
@@ -236,12 +226,11 @@ export default function InvoiceDetail() {
               ))}
             </>
           )}
-          <SousTotal label="Sous-total consultations" value={apercu.totalConsultations} color="#0284c7" />
         </div>
 
         {/* ══ SECTION EXAMENS ══ */}
         <div style={{ marginBottom: 10 }}>
-          <SectionHeader color="#059669" title="III. Examens" total={apercu.totalExamens} />
+          <SectionHeader color="#1e3a5f" title="Examens" total={apercu.totalExamens} />
           {apercu.sejours.every(s => s.examens.length === 0) ? <Vide /> : (
             <>
               <THead cols={['Description', 'Séjour', '', 'Tarif']} />
@@ -257,12 +246,11 @@ export default function InvoiceDetail() {
               )}
             </>
           )}
-          <SousTotal label="Sous-total examens" value={apercu.totalExamens} color="#059669" />
         </div>
 
         {/* ══ SECTION SOINS INFIRMIERS ══ */}
         <div style={{ marginBottom: 12 }}>
-          <SectionHeader color="#d97706" title="IV. Soins infirmiers" total={apercu.totalSoins} />
+          <SectionHeader color="#1e3a5f" title="Soins infirmiers" total={apercu.totalSoins} />
           {apercu.sejours.every(s => s.soins.length === 0) ? <Vide /> : (
             <>
               <THead cols={['Soin / Action réalisée', 'Date et heure', '', 'Tarif']} />
@@ -278,17 +266,16 @@ export default function InvoiceDetail() {
               )}
             </>
           )}
-          <SousTotal label="Sous-total soins infirmiers" value={apercu.totalSoins} color="#d97706" />
         </div>
 
         {/* ══ TOTAL GÉNÉRAL ══ */}
         <div style={{ border: '2px solid #1e3a5f', borderRadius: 3, padding: '12px 16px' }}>
           <div style={{ maxWidth: 420, marginLeft: 'auto', display: 'flex', flexDirection: 'column', gap: 7 }}>
             {[
-              { label: 'I. Hospitalisation',    value: apercu.totalHospitalisation, color: '#4f46e5' },
-              { label: 'II. Consultations',     value: apercu.totalConsultations,   color: '#0284c7' },
-              { label: 'III. Examens',          value: apercu.totalExamens,         color: '#059669' },
-              { label: 'IV. Soins infirmiers',  value: apercu.totalSoins,           color: '#d97706' },
+              { label: 'Hospitalisation',   value: apercu.totalHospitalisation, color: '#1e3a5f' },
+              { label: 'Consultations',    value: apercu.totalConsultations,   color: '#1e3a5f' },
+              { label: 'Examens',          value: apercu.totalExamens,         color: '#1e3a5f' },
+              { label: 'Soins infirmiers', value: apercu.totalSoins,           color: '#1e3a5f' },
             ].map(({ label, value, color }) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, borderBottom: '1px dashed #e2e8f0', paddingBottom: 5 }}>
                 <span style={{ color: '#64748b' }}>{label}</span>
