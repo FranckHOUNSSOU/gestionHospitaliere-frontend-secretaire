@@ -25,7 +25,10 @@ export interface SejourFacture {
   id: string;
   dateAdmission: string;
   dateSortie: string | null;
+  modeEntree?: string;
+  modeSortie?: string | null;
   motif: string;
+  service?: string | null;
   examens: LigneExamen[];
   soins: LigneSoin[];
   totalExamens: number;
@@ -48,6 +51,14 @@ export interface ApercuFacture {
     prenom: string;
     numeroIpp: string;
     dateNaissance: string;
+    sexe?: string;
+    telephone?: string | null;
+    couvertureSociale?: {
+      organisme: string;
+      type: string;
+      numero: string;
+      taux: number | null;
+    } | null;
   };
   lignesHospitalisation: LigneHospitalisation[];
   sejours: SejourFacture[];
