@@ -1,266 +1,340 @@
-import { useState } from 'react';
-import { ArrowLeft, Save, Plus, Trash2, Receipt } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, Search, X, Printer, Loader2, Building2, Stethoscope, FlaskConical, HeartPulse } from 'lucide-react';
 import { useNavigation } from '../../../context/NavigationContext';
-import { patients, admissions } from '../../../services/mockData';
+import { patientsData, type Patient } from '../../../services/patients';
+import { getApercuFacture, type ApercuFacture } from '../../../services/facturationService';
 
-interface LineItem {
-  id: string;
-  description: string;
-  quantity: number;
-  unitPrice: number;
+function fmt(n: number) {
+  return n.toLocaleString('fr-FR') + ' FCFA';
 }
 
-const serviceCategories = [
-  { label: 'Consultation médecin',       price: 50000 },
-  { label: 'Consultation spécialiste',   price: 75000 },
-  { label: 'Chambre standard (par jour)',price: 20000 },
-  { label: 'Chambre privée (par jour)',  price: 35000 },
-  { label: "Salle d'opération",          price: 200000 },
-  { label: "Frais d'admission",          price: 50000 },
-  { label: 'Examens biologiques',        price: 45000 },
-  { label: 'Radiologie (radio)',         price: 40000 },
-  { label: 'Radiologie (scanner)',       price: 80000 },
-  { label: 'Radiologie (IRM)',           price: 150000 },
-  { label: 'Médicaments',               price: 25000 },
-  { label: 'Soins infirmiers',           price: 15000 },
-  { label: 'Kinésithérapie (séance)',    price: 20000 },
-  { label: 'Autre',                      price: 0 },
-];
+function fmtDate(s: string) {
+  return new Date(s).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+}
 
-export default function InvoiceForm() {
-  const { navigate } = useNavigation();
-  const [form, setForm] = useState({
-    patientId: '', admissionId: '', dueDate: '', paymentMethod: '', notes: '', discount: 0,
-  });
-  const [items, setItems] = useState<LineItem[]>([
-    { id: '1', description: '', quantity: 1, unitPrice: 0 },
-  ]);
-  const [saved, setSaved] = useState(false);
+function fmtDateHeure(s: string) {
+  return new Date(s).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
 
-  const selectedPatient = patients.find((p) => p.id === form.patientId);
-  const patientAdmissions = admissions.filter((a) => a.patientId === form.patientId && a.status === 'active');
-
-  function addItem() {
-    setItems((prev) => [...prev, { id: Date.now().toString(), description: '', quantity: 1, unitPrice: 0 }]);
-  }
-
-  function removeItem(id: string) {
-    setItems((prev) => prev.filter((i) => i.id !== id));
-  }
-
-  function updateItem(id: string, field: keyof LineItem, value: string | number) {
-    setItems((prev) => prev.map((item) => item.id === id ? { ...item, [field]: value } : item));
-  }
-
-  const subtotal = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
-  const total = subtotal - form.discount;
-
-  function handleSave() {
-    setSaved(true);
-    setTimeout(() => navigate('billing'), 1000);
-  }
-
+/* ── Section de la facture ─────────────────────────────────────────────────── */
+function Section({ icon, title, children, total, color = '#0ea5e9' }: {
+  icon: React.ReactNode; title: string; children: React.ReactNode; total: number; color?: string;
+}) {
   return (
-    <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <button onClick={() => navigate('billing')} className="adm-back-btn"><ArrowLeft size={16} /></button>
-        <div>
-          <p style={{ fontSize: '16px', fontWeight: 700, color: 'var(--c-t0)', margin: 0 }}>Nouvelle facture</p>
-          <p style={{ fontSize: '12px', color: 'var(--c-t2)', margin: '2px 0 0' }}>Créer une facture pour un patient</p>
+    <div className="adm-form-section" style={{ breakInside: 'avoid' }}>
+      <div className="adm-form-section-head">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ color }}>{icon}</span>
+          <p className="adm-card-title">{title}</p>
         </div>
+        <span style={{ fontSize: 13, fontWeight: 700, color }}>
+          {fmt(total)}
+        </span>
       </div>
-
-      {saved && (
-        <div className="adm-alert adm-alert-success">
-          <Receipt size={14} style={{ flexShrink: 0 }} />
-          Facture créée avec succès !
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '14px', alignItems: 'start' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {/* Informations de facturation */}
-          <div className="adm-form-section">
-            <div className="adm-form-section-head">
-              <p className="adm-card-title">Informations de facturation</p>
-            </div>
-            <div className="adm-form-section-body" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div className="adm-form-field">
-                <label className="adm-label">Patient *</label>
-                <select value={form.patientId}
-                  onChange={(e) => setForm((f) => ({ ...f, patientId: e.target.value, admissionId: '' }))}
-                  className="adm-input">
-                  <option value="">Sélectionner un patient</option>
-                  {patients.map((p) => (
-                    <option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>
-                  ))}
-                </select>
-              </div>
-              {form.patientId && patientAdmissions.length > 0 && (
-                <div className="adm-form-field">
-                  <label className="adm-label">Lier à une admission</label>
-                  <select value={form.admissionId}
-                    onChange={(e) => setForm((f) => ({ ...f, admissionId: e.target.value }))}
-                    className="adm-input">
-                    <option value="">Aucune admission</option>
-                    {patientAdmissions.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.department} — {a.room} (entrée: {new Date(a.admissionDate).toLocaleDateString('fr-FR')})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              <div className="adm-form-grid adm-form-grid-2">
-                <div className="adm-form-field">
-                  <label className="adm-label">Date d'échéance</label>
-                  <input type="date" value={form.dueDate}
-                    onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))}
-                    className="adm-input" />
-                </div>
-                <div className="adm-form-field">
-                  <label className="adm-label">Mode de paiement</label>
-                  <select value={form.paymentMethod}
-                    onChange={(e) => setForm((f) => ({ ...f, paymentMethod: e.target.value }))}
-                    className="adm-input">
-                    <option value="">Sélectionner</option>
-                    <option value="cash">Espèces</option>
-                    <option value="card">Carte bancaire</option>
-                    <option value="insurance">Assurance</option>
-                    <option value="transfer">Virement</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Lignes de facturation */}
-          <div className="adm-form-section">
-            <div className="adm-form-section-head" style={{ justifyContent: 'space-between' }}>
-              <p className="adm-card-title">Lignes de facturation</p>
-              <button onClick={addItem} className="adm-btn adm-btn-primary" style={{ height: '28px', fontSize: '11.5px' }}>
-                <Plus size={12} /> Ajouter
-              </button>
-            </div>
-            <div className="adm-form-section-body" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {items.map((item) => (
-                <div key={item.id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', padding: '10px 12px', background: 'var(--c-surf2)', borderRadius: '8px', border: '1px solid var(--c-bdr)' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr 1.2fr', gap: '8px', flex: 1 }}>
-                    <div className="adm-form-field">
-                      <label className="adm-label">Description</label>
-                      <input type="text" value={item.description}
-                        onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                        list={`presets-${item.id}`}
-                        className="adm-input" placeholder="Prestation..." />
-                      <datalist id={`presets-${item.id}`}>
-                        {serviceCategories.map((p) => <option key={p.label} value={p.label} />)}
-                      </datalist>
-                    </div>
-                    <div className="adm-form-field">
-                      <label className="adm-label">Qté</label>
-                      <input type="number" min="1" value={item.quantity}
-                        onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 1)}
-                        className="adm-input" />
-                    </div>
-                    <div className="adm-form-field">
-                      <label className="adm-label">Prix unitaire</label>
-                      <input type="number" min="0" value={item.unitPrice}
-                        onChange={(e) => updateItem(item.id, 'unitPrice', parseInt(e.target.value) || 0)}
-                        className="adm-input" />
-                    </div>
-                    <div className="adm-form-field">
-                      <label className="adm-label">Total</label>
-                      <div className="adm-input adm-input--ro" style={{ textAlign: 'right', fontWeight: 600 }}>
-                        {(item.quantity * item.unitPrice).toLocaleString('fr-FR')}
-                      </div>
-                    </div>
-                  </div>
-                  <button onClick={() => removeItem(item.id)} disabled={items.length === 1}
-                    className="adm-act adm-act-danger" style={{ marginBottom: '0', height: '34px', width: '34px', justifyContent: 'center' }}>
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              ))}
-
-              <div style={{ marginTop: '8px', paddingTop: '10px', borderTop: '1px solid var(--c-bdr)' }}>
-                <div style={{ marginLeft: 'auto', maxWidth: '280px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div className="adm-summary-row">
-                    <span className="adm-summary-k">Sous-total</span>
-                    <span className="adm-summary-v">{subtotal.toLocaleString('fr-FR')} GNF</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12.5px' }}>
-                    <span style={{ color: 'var(--c-t2)' }}>Remise</span>
-                    <input type="number" min="0" value={form.discount}
-                      onChange={(e) => setForm((f) => ({ ...f, discount: parseInt(e.target.value) || 0 }))}
-                      className="adm-input" style={{ width: '110px', textAlign: 'right', padding: '5px 8px' }} />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--c-bdr)', paddingTop: '8px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--c-t0)' }}>TOTAL</span>
-                    <span style={{ fontWeight: 700, fontSize: '16px', color: 'var(--c-accent)' }}>{total.toLocaleString('fr-FR')} GNF</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div className="adm-form-section">
-            <div className="adm-form-section-head">
-              <p className="adm-card-title">Notes</p>
-            </div>
-            <div className="adm-form-section-body">
-              <textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                rows={3} className="adm-input"
-                placeholder="Informations complémentaires, modalités de paiement..." />
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {selectedPatient && (
-            <div style={{ background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-bd)', borderRadius: '10px', padding: '14px' }}>
-              <p className="adm-sec-h" style={{ color: 'var(--c-accent)' }}>Patient</p>
-              <p className="adm-cell-name" style={{ color: 'var(--c-accent)', fontSize: '13px' }}>
-                {selectedPatient.firstName} {selectedPatient.lastName}
-              </p>
-              <p className="adm-cell-mono" style={{ color: 'var(--c-accent)' }}>{selectedPatient.insurance || 'Non assuré'}</p>
-              <p className="adm-cell-mono" style={{ color: 'var(--c-accent)' }}>{selectedPatient.phone}</p>
-            </div>
-          )}
-
-          <div className="adm-card">
-            <div className="adm-card-head">
-              <p className="adm-card-title">Résumé</p>
-            </div>
-            <div className="adm-card-body">
-              {[
-                { label: 'Lignes',    value: `${items.length}` },
-                { label: 'Sous-total', value: `${subtotal.toLocaleString('fr-FR')} GNF` },
-                ...(form.discount > 0 ? [{ label: 'Remise', value: `-${form.discount.toLocaleString('fr-FR')} GNF` }] : []),
-              ].map(({ label, value }) => (
-                <div key={label} className="adm-summary-row">
-                  <span className="adm-summary-k">{label}</span>
-                  <span className="adm-summary-v">{value}</span>
-                </div>
-              ))}
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--c-bdr)', paddingTop: '8px', marginTop: '4px' }}>
-                <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--c-t0)' }}>Total</span>
-                <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--c-accent)' }}>{total.toLocaleString('fr-FR')} GNF</span>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <button onClick={handleSave} className="adm-btn adm-btn-primary" style={{ height: '38px', justifyContent: 'center', gap: '6px' }}>
-              <Save size={14} /> Créer la facture
-            </button>
-            <button onClick={() => navigate('billing')} className="adm-btn" style={{ height: '38px', justifyContent: 'center' }}>
-              Annuler
-            </button>
-          </div>
-        </div>
+      <div className="adm-form-section-body">
+        {children}
       </div>
     </div>
+  );
+}
+
+function TableLigne({ cols }: { cols: (string | number)[] }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr 1fr 1fr', gap: 8, padding: '7px 10px', borderBottom: '1px solid var(--c-bdr)', fontSize: 12, color: 'var(--c-t1)' }}>
+      {cols.map((c, i) => (
+        <span key={i} style={{ textAlign: i === 0 ? 'left' : 'right', fontVariantNumeric: 'tabular-nums' }}>
+          {typeof c === 'number' ? c.toLocaleString('fr-FR') : c}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function TableHeader({ cols }: { cols: string[] }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr 1fr 1fr', gap: 8, padding: '6px 10px', background: 'var(--c-surf2)', borderRadius: '6px 6px 0 0', fontSize: 11, fontWeight: 600, color: 'var(--c-t3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+      {cols.map((c, i) => <span key={i} style={{ textAlign: i === 0 ? 'left' : 'right' }}>{c}</span>)}
+    </div>
+  );
+}
+
+function TableVide() {
+  return <p style={{ fontSize: 12, color: 'var(--c-t3)', margin: '10px 0', fontStyle: 'italic' }}>Aucune prestation</p>;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   COMPOSANT PRINCIPAL
+   ══════════════════════════════════════════════════════════════════════════════ */
+export default function InvoiceForm() {
+  const { navigate } = useNavigation();
+
+  // Recherche patient
+  const [query,         setQuery]         = useState('');
+  const [results,       setResults]       = useState<Patient[]>([]);
+  const [searching,     setSearching]     = useState(false);
+  const [showDropdown,  setShowDropdown]  = useState(false);
+  const [patient,       setPatient]       = useState<Patient | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Facture
+  const [apercu,   setApercu]   = useState<ApercuFacture | null>(null);
+  const [loading,  setLoading]  = useState(false);
+  const [erreur,   setErreur]   = useState<string | null>(null);
+
+  // Fermer dropdown au clic extérieur
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setShowDropdown(false);
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Recherche debounce
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (!query.trim() || query.length < 2) { setResults([]); setShowDropdown(false); return; }
+    searchTimer.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const data = await patientsData.rechercher(query);
+        setResults(data); setShowDropdown(true);
+      } catch { setResults([]); } finally { setSearching(false); }
+    }, 300);
+  }, [query]);
+
+  async function selectPatient(p: Patient) {
+    setPatient(p);
+    setQuery(`${p.prenom} ${p.nom} — ${p.numeroIpp}`);
+    setShowDropdown(false);
+    setLoading(true); setErreur(null);
+    try {
+      const r = await getApercuFacture(p.id);
+      setApercu(r.data);
+    } catch {
+      setErreur('Impossible de charger les données de facturation.');
+    } finally { setLoading(false); }
+  }
+
+  function clearPatient() {
+    setPatient(null); setQuery(''); setResults([]); setApercu(null); setErreur(null);
+  }
+
+  function handlePrint() { window.print(); }
+
+  return (
+    <>
+      {/* CSS impression */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #facture-print, #facture-print * { visibility: visible; }
+          #facture-print { position: absolute; top: 0; left: 0; width: 100%; }
+          .no-print { display: none !important; }
+        }
+      `}</style>
+
+      <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+        {/* En-tête */}
+        <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={() => navigate('billing')} className="adm-back-btn"><ArrowLeft size={16} /></button>
+          <div>
+            <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--c-t0)', margin: 0 }}>Nouvelle facture</p>
+            <p style={{ fontSize: 12, color: 'var(--c-t2)', margin: '2px 0 0' }}>Rechercher un patient pour générer automatiquement sa facture</p>
+          </div>
+        </div>
+
+        {/* Recherche patient */}
+        <div className="adm-form-section no-print">
+          <div className="adm-form-section-head">
+            <p className="adm-card-title">Sélectionner le patient</p>
+          </div>
+          <div className="adm-form-section-body">
+            <div ref={dropdownRef} style={{ position: 'relative', maxWidth: 480 }}>
+              <div className="adm-search">
+                <span className="adm-search-icon">
+                  {searching
+                    ? <Loader2 size={13} style={{ animation: 'spin 0.7s linear infinite' }} />
+                    : <Search size={13} />}
+                </span>
+                <input
+                  className="adm-search-input"
+                  placeholder="Nom, prénom ou numéro IPP…"
+                  value={query}
+                  onChange={e => { setPatient(null); setQuery(e.target.value); }}
+                  onFocus={() => results.length > 0 && setShowDropdown(true)}
+                />
+                {query && (
+                  <button onClick={clearPatient} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-t3)', display: 'flex' }}>
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              {showDropdown && results.length > 0 && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--c-bg)', border: '1px solid var(--c-bdr)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', marginTop: 4, maxHeight: 240, overflowY: 'auto' }}>
+                  {results.map(p => (
+                    <div key={p.id} onMouseDown={() => selectPatient(p)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid var(--c-bdr)' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--c-surf2)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <div style={{ width: 34, height: 34, borderRadius: 8, background: 'linear-gradient(135deg,#60a5fa,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                        {p.prenom[0]}{p.nom[0]}
+                      </div>
+                      <div>
+                        <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>{p.prenom} {p.nom}</p>
+                        <p style={{ margin: 0, fontSize: 11, color: 'var(--c-t3)' }}>
+                          {p.numeroIpp}{p.dateNaissance && ` · ${new Date(p.dateNaissance).toLocaleDateString('fr-FR')}`}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Chargement */}
+        {loading && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 24, color: 'var(--c-t3)', fontSize: 13 }}>
+            <Loader2 size={16} style={{ animation: 'spin 0.7s linear infinite' }} />
+            Génération de la facture en cours…
+          </div>
+        )}
+
+        {/* Erreur */}
+        {erreur && <div className="adm-alert adm-alert-error">{erreur}</div>}
+
+        {/* ── FACTURE ── */}
+        {apercu && !loading && (
+          <div id="facture-print">
+
+            {/* En-tête facture */}
+            <div className="adm-card" style={{ padding: '20px 24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+                <div>
+                  <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--c-t0)' }}>FACTURE MÉDICALE</p>
+                  <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--c-t3)' }}>Générée le {fmtDate(apercu.genereLe)}</p>
+                </div>
+                <button onClick={handlePrint} className="adm-btn adm-btn-primary no-print" style={{ height: 36, gap: 6 }}>
+                  <Printer size={14} /> Imprimer
+                </button>
+              </div>
+
+              <div style={{ marginTop: 16, padding: '12px 16px', background: 'var(--c-surf2)', borderRadius: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8 }}>
+                  {[
+                    { k: 'Patient',       v: `${apercu.patient.prenom} ${apercu.patient.nom}` },
+                    { k: 'N° IPP',        v: apercu.patient.numeroIpp },
+                    { k: 'Date naissance',v: fmtDate(apercu.patient.dateNaissance) },
+                  ].map(({ k, v }) => (
+                    <div key={k}>
+                      <p style={{ margin: 0, fontSize: 10, color: 'var(--c-t3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{k}</p>
+                      <p style={{ margin: '2px 0 0', fontSize: 13, fontWeight: 600, color: 'var(--c-t0)' }}>{v}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Hospitalisation ── */}
+            <Section icon={<Building2 size={15} />} title="Hospitalisation" total={apercu.totalHospitalisation} color="#7c3aed">
+              {apercu.lignesHospitalisation.length === 0 ? <TableVide /> : (
+                <>
+                  <TableHeader cols={['Description', 'Jours', 'Prix/jour', 'Total']} />
+                  {apercu.lignesHospitalisation.map((l, i) => (
+                    <TableLigne key={i} cols={[l.description, l.jours, l.prixJour, l.total]} />
+                  ))}
+                </>
+              )}
+            </Section>
+
+            {/* ── Consultations / RDV ── */}
+            <Section icon={<Stethoscope size={15} />} title="Consultations et rendez-vous" total={apercu.totalConsultations} color="#0ea5e9">
+              {apercu.consultations.length === 0 ? <TableVide /> : (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr 1fr 1fr', gap: 8, padding: '6px 10px', background: 'var(--c-surf2)', borderRadius: '6px 6px 0 0', fontSize: 11, fontWeight: 600, color: 'var(--c-t3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <span>Type / Médecin</span><span style={{ textAlign: 'right' }}>Date</span>
+                    <span style={{ textAlign: 'right' }}>Statut</span><span style={{ textAlign: 'right' }}>Tarif</span>
+                  </div>
+                  {apercu.consultations.map(c => (
+                    <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '3fr 1fr 1fr 1fr', gap: 8, padding: '7px 10px', borderBottom: '1px solid var(--c-bdr)', fontSize: 12, color: 'var(--c-t1)' }}>
+                      <div>
+                        <span style={{ fontWeight: 600 }}>{c.type}</span>
+                        <span style={{ color: 'var(--c-t3)', marginLeft: 6 }}>{c.medecin}</span>
+                      </div>
+                      <span style={{ textAlign: 'right' }}>{new Date(c.dateHeure).toLocaleDateString('fr-FR')}</span>
+                      <span style={{ textAlign: 'right' }}>{c.statut}</span>
+                      <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{c.tarif.toLocaleString('fr-FR')}</span>
+                    </div>
+                  ))}
+                </>
+              )}
+            </Section>
+
+            {/* ── Examens ── */}
+            {apercu.sejours.map(s => s.examens.length > 0 && (
+              <Section key={`ex-${s.id}`} icon={<FlaskConical size={15} />}
+                title={`Examens — Séjour du ${fmtDate(s.dateAdmission)}`}
+                total={s.totalExamens} color="#059669">
+                <TableHeader cols={['Description', '', '', 'Tarif']} />
+                {s.examens.map(e => (
+                  <div key={e.id} style={{ display: 'grid', gridTemplateColumns: '3fr 1fr 1fr 1fr', gap: 8, padding: '7px 10px', borderBottom: '1px solid var(--c-bdr)', fontSize: 12, color: 'var(--c-t1)' }}>
+                    <span>{e.description}</span>
+                    <span /><span />
+                    <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{e.tarif.toLocaleString('fr-FR')}</span>
+                  </div>
+                ))}
+              </Section>
+            ))}
+
+            {/* ── Soins infirmiers ── */}
+            {apercu.sejours.map(s => s.soins.length > 0 && (
+              <Section key={`si-${s.id}`} icon={<HeartPulse size={15} />}
+                title={`Soins infirmiers — Séjour du ${fmtDate(s.dateAdmission)}`}
+                total={s.totalSoins} color="#d97706">
+                <TableHeader cols={['Description', 'Date / Heure', '', 'Tarif']} />
+                {s.soins.map(soin => (
+                  <div key={soin.id} style={{ display: 'grid', gridTemplateColumns: '3fr 1fr 1fr 1fr', gap: 8, padding: '7px 10px', borderBottom: '1px solid var(--c-bdr)', fontSize: 12, color: 'var(--c-t1)' }}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{soin.description}</span>
+                    <span style={{ textAlign: 'right', fontSize: 11, color: 'var(--c-t3)' }}>{fmtDateHeure(soin.dateHeure)}</span>
+                    <span />
+                    <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{soin.tarif.toLocaleString('fr-FR')}</span>
+                  </div>
+                ))}
+              </Section>
+            ))}
+
+            {/* ── Total général ── */}
+            <div className="adm-card" style={{ padding: '16px 20px' }}>
+              <div style={{ maxWidth: 380, marginLeft: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[
+                  { label: 'Hospitalisation',   value: apercu.totalHospitalisation,  color: '#7c3aed' },
+                  { label: 'Consultations',      value: apercu.totalConsultations,    color: '#0ea5e9' },
+                  { label: 'Examens',            value: apercu.totalExamens,          color: '#059669' },
+                  { label: 'Soins infirmiers',   value: apercu.totalSoins,            color: '#d97706' },
+                ].map(({ label, value, color }) => (
+                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <span style={{ color: 'var(--c-t2)' }}>{label}</span>
+                    <span style={{ color, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{fmt(value)}</span>
+                  </div>
+                ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid var(--c-bdr)', paddingTop: 10, marginTop: 4 }}>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--c-t0)' }}>TOTAL GÉNÉRAL</span>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--c-accent)', fontVariantNumeric: 'tabular-nums' }}>
+                    {fmt(apercu.totalGeneral)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        )}
+      </div>
+    </>
   );
 }
