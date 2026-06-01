@@ -21,7 +21,11 @@ let refreshPromise: Promise<string | null> | null = null;
 
 async function doRefresh(): Promise<string | null> {
   const refreshToken = getRefreshToken();
-  if (!refreshToken) return null;
+  if (!refreshToken) {
+    clearTokens();
+    window.location.href = '/login';
+    return null;
+  }
 
   const baseURL = import.meta.env.VITE_API_URL ?? '/api';
   try {
@@ -70,6 +74,9 @@ client.interceptors.response.use(
         original.headers.Authorization = `Bearer ${newToken}`;
         return client(original);
       }
+      clearTokens();
+      window.location.href = '/login';
+      return Promise.reject(new Error('Session expirée'));
     }
 
     const message =

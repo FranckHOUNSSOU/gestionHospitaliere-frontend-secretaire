@@ -10,7 +10,7 @@
   margin: 0;
   padding: 0;
   font-family: 'Roboto', system-ui, sans-serif;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 /* ── TOKENS CLAIR ─────────────────────────────────────────── */
@@ -35,8 +35,8 @@
   --c-amber-bg:  #fef3c7;
   --c-red:       #dc2626;
   --c-red-bg:    #fee2e2;
-  --c-sidebar:   250px;
-  --c-topbar:    56px;
+  --c-sidebar:   clamp(180px, 17vw, 250px);
+  --c-topbar:    3.5rem;
 }
 
 /* ── TOKENS SOMBRE ────────────────────────────────────────── */
@@ -74,7 +74,7 @@
   overflow: hidden;
   background: var(--c-bg);
   color: var(--c-t0);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
 }
 
@@ -86,7 +86,7 @@
   overflow: hidden;
   background: var(--c-bg);
   color: var(--c-t0);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
 }
 
@@ -101,7 +101,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 1.5%;
   flex-shrink: 0;
   z-index: 50;
 }
@@ -109,13 +109,13 @@
 .adm-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .adm-logo-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 0.5625rem;
   background: var(--c-accent);
   display: flex;
   align-items: center;
@@ -124,7 +124,7 @@
 }
 
 .adm-logo-name {
-  font-size: 15px !important;
+  font-size: 0.9375rem !important;
   font-weight: 700 !important;
   color: var(--c-t0) !important;
   letter-spacing: -0.3px;
@@ -138,29 +138,29 @@
 
 .adm-logo-chip {
   display: inline-block;
-  font-size: 9px !important;
+  font-size: 0.5625rem !important;
   font-weight: 700 !important;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   background: var(--c-accent-bg);
   color: var(--c-accent) !important;
   border: 1px solid var(--c-accent-bd);
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-left: 7px;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  margin-left: 0.4375rem;
   vertical-align: middle;
 }
 
 .adm-topbar-l {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 1.25rem;
 }
 
 .adm-topbar-sidebar-toggle {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 0.5rem;
   border: 1px solid var(--c-bdr);
   background: var(--c-surf2);
   display: flex;
@@ -181,26 +181,26 @@
 .adm-topbar-r {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .adm-online-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px !important;
+  gap: 0.375rem;
+  font-size: 0.6875rem !important;
   font-weight: 600 !important;
   color: var(--c-green) !important;
   background: var(--c-green-bg);
   border: 1px solid var(--c-green-bd);
-  padding: 5px 12px;
-  border-radius: 20px;
+  padding: 0.3125rem 0.75rem;
+  border-radius: 1.25rem;
   white-space: nowrap;
 }
 
 .adm-online-dot {
-  width: 6px;
-  height: 6px;
+  width: 0.375rem;
+  height: 0.375rem;
   border-radius: 50%;
   background: var(--c-green);
   animation: adm-pulse 2s infinite;
@@ -212,9 +212,9 @@
 }
 
 .adm-icon-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
   border: 1px solid var(--c-bdr);
   background: var(--c-surf2);
   display: flex;
@@ -235,10 +235,10 @@
 
 .adm-notif-badge {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 7px;
-  height: 7px;
+  top: 0.3125rem;
+  right: 0.3125rem;
+  width: 0.4375rem;
+  height: 0.4375rem;
   border-radius: 50%;
   background: var(--c-red);
   border: 1.5px solid var(--c-surf);
@@ -247,11 +247,11 @@
 .adm-user-btn {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 0.5625rem;
   background: var(--c-surf2);
   border: 1px solid var(--c-bdr);
-  border-radius: 10px;
-  padding: 5px 13px 5px 5px;
+  border-radius: 0.625rem;
+  padding: 0.3125rem 0.8125rem 0.3125rem 0.3125rem;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -262,14 +262,14 @@
 }
 
 .adm-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 0.5rem;
   background: var(--c-accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px !important;
+  font-size: 0.6875rem !important;
   font-weight: 700 !important;
   color: #fff !important;
   font-family: 'JetBrains Mono', monospace;
@@ -277,7 +277,7 @@
 }
 
 .adm-user-name {
-  font-size: 12.5px !important;
+  font-size: 0.78125rem !important;
   font-weight: 600 !important;
   color: var(--c-t0) !important;
   line-height: 1.3;
@@ -285,7 +285,7 @@
 }
 
 .adm-user-role {
-  font-size: 10.5px !important;
+  font-size: 0.65625rem !important;
   color: var(--c-t2) !important;
   line-height: 1.3;
   white-space: nowrap;
@@ -333,8 +333,8 @@
 
 /* ── Minimized state ───────────────────────────────────────── */
 .adm-sidebar--min {
-  width: 58px !important;
-  min-width: 58px !important;
+  width: 3.625rem !important;
+  min-width: 3.625rem !important;
 }
 
 .adm-sidebar--min .adm-nav-sec {
@@ -351,8 +351,8 @@
 
 .adm-sidebar--min .adm-nav-link {
   justify-content: center !important;
-  padding: 10px 0 !important;
-  margin: 2px 6px !important;
+  padding: 0.625rem 0 !important;
+  margin: 0.125rem 0.375rem !important;
 }
 
 .adm-sidebar--min .adm-sidebar-foot {
@@ -360,8 +360,8 @@
 }
 
 .adm-nav-sec {
-  padding: 16px 16px 5px;
-  font-size: 9.5px !important;
+  padding: 1rem 1rem 0.3125rem;
+  font-size: 0.59375rem !important;
   font-weight: 700 !important;
   color: var(--c-t3) !important;
   text-transform: uppercase;
@@ -372,11 +372,11 @@
 .adm-nav-link {
   display: flex !important;
   align-items: center !important;
-  gap: 9px !important;
-  padding: 8px 14px !important;
-  margin: 1px 8px !important;
-  border-radius: 8px !important;
-  font-size: 12.5px !important;
+  gap: 0.5625rem !important;
+  padding: 0.5rem 0.875rem !important;
+  margin: 1px 0.5rem !important;
+  border-radius: 0.5rem !important;
+  font-size: 0.78125rem !important;
   font-weight: 400 !important;
   color: var(--c-t1) !important;
   text-decoration: none !important;
@@ -400,10 +400,10 @@
 
 .adm-nav-badge {
   margin-left: auto;
-  font-size: 10px !important;
+  font-size: 0.625rem !important;
   font-weight: 600 !important;
-  padding: 1px 7px;
-  border-radius: 10px;
+  padding: 1px 0.4375rem;
+  border-radius: 0.625rem;
   font-family: 'JetBrains Mono', monospace;
   line-height: 1.6;
 }
@@ -414,7 +414,7 @@
 
 .adm-sidebar-foot {
   margin-top: auto;
-  padding: 14px;
+  padding: 0.875rem;
   border-top: 1px solid var(--c-bdr);
 }
 
@@ -437,8 +437,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 750px;
-  height: 750px;
+  width: clamp(300px, 45vw, 750px);
+  height: clamp(300px, 45vw, 750px);
   background-image: url('/chuMel-logo.png');
   background-repeat: no-repeat;
   background-position: center center;
@@ -454,7 +454,7 @@
 .adm-main {
   flex: 1;
   overflow-y: auto;
-  padding: 22px 24px;
+  padding: 1.375rem 1.5%;
   background: transparent;
   min-width: 0;
   position: relative;
@@ -462,11 +462,11 @@
 
 
 .adm-page-h {
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
 }
 
 .adm-page-title {
-  font-size: 22px !important;
+  font-size: 1.375rem !important;
   font-weight: 700 !important;
   color: var(--c-t0) !important;
   letter-spacing: -0.5px !important;
@@ -475,9 +475,9 @@
 }
 
 .adm-page-sub {
-  font-size: 11.5px !important;
+  font-size: 0.71875rem !important;
   color: var(--c-t2) !important;
-  margin-top: 3px !important;
+  margin-top: 0.1875rem !important;
   font-family: 'JetBrains Mono', monospace !important;
   line-height: 1.4 !important;
 }
@@ -488,22 +488,22 @@
 .adm-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 20px;
+  gap: 0.875rem;
+  margin-bottom: 1.25rem;
 }
 
 .adm-kpi {
   background: var(--c-surf);
   border: 1px solid var(--c-bdr);
-  border-radius: 12px;
-  padding: 18px 20px;
+  border-radius: 0.75rem;
+  padding: 1.125rem 1.25rem;
   position: relative;
   overflow: hidden;
   transition: box-shadow 0.15s, transform 0.15s;
 }
 
 .adm-kpi:hover {
-  box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+  box-shadow: 0 0.25rem 1.25rem rgba(0,0,0,0.07);
   transform: translateY(-1px);
 }
 
@@ -511,7 +511,7 @@
   content: '';
   position: absolute;
   left: 0; top: 0; bottom: 0;
-  width: 3px;
+  width: 0.1875rem;
   border-radius: 0;
 }
 
@@ -541,26 +541,26 @@
 .adm-kpi-red::before { background: var(--c-amber) !important; }
 
 .adm-kpi-lbl {
-  font-size: 10px !important;
+  font-size: 0.625rem !important;
   font-weight: 700 !important;
   color: var(--c-t2) !important;
   text-transform: uppercase !important;
   letter-spacing: 0.7px !important;
-  margin-bottom: 10px !important;
+  margin-bottom: 0.625rem !important;
   line-height: 1 !important;
 }
 
 .adm-kpi-val {
-  font-size: 30px !important;
+  font-size: 1.875rem !important;
   font-weight: 700 !important;
   color: var(--c-t0) !important;
   letter-spacing: -1px !important;
   line-height: 1 !important;
-  margin-bottom: 6px !important;
+  margin-bottom: 0.375rem !important;
 }
 
 .adm-kpi-note {
-  font-size: 11px !important;
+  font-size: 0.6875rem !important;
   line-height: 1.3 !important;
   margin: 0 !important;
 }
@@ -574,8 +574,8 @@
    ═══════════════════════════════════════════════════════════ */
 .adm-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 280px;
-  gap: 16px;
+  grid-template-columns: 1fr 1fr 20%;
+  gap: 1rem;
   align-items: start;
 }
 
@@ -585,21 +585,21 @@
 .adm-card {
   background: var(--c-surf);
   border: 1px solid var(--c-bdr);
-  border-radius: 12px;
+  border-radius: 0.75rem;
   overflow: hidden;
 }
 
 .adm-card-head {
-  padding: 14px 18px;
+  padding: 0.875rem 1.125rem;
   border-bottom: 1px solid var(--c-bdr);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .adm-card-title {
-  font-size: 13.5px !important;
+  font-size: 0.84375rem !important;
   font-weight: 600 !important;
   color: var(--c-t0) !important;
   line-height: 1.3 !important;
@@ -607,14 +607,14 @@
 }
 
 .adm-card-sub {
-  font-size: 11px !important;
+  font-size: 0.6875rem !important;
   color: var(--c-t2) !important;
-  margin: 2px 0 0 !important;
+  margin: 0.125rem 0 0 !important;
   line-height: 1 !important;
 }
 
 .adm-card-body {
-  padding: 14px 18px;
+  padding: 0.875rem 1.125rem;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -623,11 +623,11 @@
 .adm-btn {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 5px !important;
-  height: 32px !important;
-  padding: 0 14px !important;
-  border-radius: 7px !important;
-  font-size: 12px !important;
+  gap: 0.3125rem !important;
+  height: 2rem !important;
+  padding: 0 0.875rem !important;
+  border-radius: 0.4375rem !important;
+  font-size: 0.75rem !important;
   font-weight: 500 !important;
   font-family: 'Roboto', sans-serif !important;
   cursor: pointer !important;
@@ -649,7 +649,7 @@
   background: var(--c-accent) !important;
   color: #ffffff !important;
   border-color: var(--c-accent) !important;
-  margin-bottom: 42px !important;
+  margin-bottom: 2.625rem !important;
 }
 
 .adm-btn-primary:hover {
@@ -662,12 +662,12 @@
 .adm-table {
   width: 100% !important;
   border-collapse: collapse !important;
-  font-size: 12.5px !important;
+  font-size: 0.78125rem !important;
 }
 
 .adm-table thead th {
-  padding: 7px 12px !important;
-  font-size: 9.5px !important;
+  padding: 0.4375rem 0.75rem !important;
+  font-size: 0.59375rem !important;
   font-weight: 700 !important;
   color: var(--c-t2) !important;
   text-transform: uppercase !important;
@@ -680,7 +680,7 @@
 }
 
 .adm-table tbody td {
-  padding: 11px 14px !important;
+  padding: 0.6875rem 0.875rem !important;
   color: var(--c-t1) !important;
   border-bottom: 1px solid var(--c-bdr) !important;
   vertical-align: middle !important;
@@ -696,7 +696,7 @@
 }
 
 .adm-cell-name {
-  font-size: 12.5px !important;
+  font-size: 0.78125rem !important;
   font-weight: 600 !important;
   color: var(--c-t0) !important;
   line-height: 1.3 !important;
@@ -704,9 +704,9 @@
 
 .adm-cell-mono {
   font-family: 'JetBrains Mono', monospace !important;
-  font-size: 10.5px !important;
+  font-size: 0.65625rem !important;
   color: var(--c-t2) !important;
-  margin-top: 2px !important;
+  margin-top: 0.125rem !important;
   line-height: 1.3 !important;
 }
 
@@ -716,10 +716,10 @@
 .adm-tag {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 5px !important;
-  padding: 3px 9px !important;
-  border-radius: 5px !important;
-  font-size: 11px !important;
+  gap: 0.3125rem !important;
+  padding: 0.1875rem 0.5625rem !important;
+  border-radius: 0.3125rem !important;
+  font-size: 0.6875rem !important;
   font-weight: 500 !important;
   white-space: nowrap !important;
   line-height: 1.4 !important;
@@ -728,8 +728,8 @@
 .adm-tag::before {
   content: '' !important;
   display: block !important;
-  width: 5px !important;
-  height: 5px !important;
+  width: 0.3125rem !important;
+  height: 0.3125rem !important;
   border-radius: 50% !important;
   background: currentColor !important;
   flex-shrink: 0 !important;
@@ -747,9 +747,9 @@
 .adm-act {
   display: inline-flex !important;
   align-items: center !important;
-  font-size: 11px !important;
-  padding: 3px 10px !important;
-  border-radius: 5px !important;
+  font-size: 0.6875rem !important;
+  padding: 0.1875rem 0.625rem !important;
+  border-radius: 0.3125rem !important;
   cursor: pointer !important;
   border: 1px solid var(--c-bdr) !important;
   background: var(--c-surf2) !important;
@@ -757,7 +757,7 @@
   font-family: 'Roboto', sans-serif !important;
   transition: all 0.15s !important;
   white-space: nowrap !important;
-  height: 26px !important;
+  height: 1.625rem !important;
   line-height: 1 !important;
 }
 
@@ -776,7 +776,7 @@
 
 .adm-act-row {
   display: flex !important;
-  gap: 5px !important;
+  gap: 0.3125rem !important;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -785,9 +785,9 @@
 .adm-bars {
   display: flex;
   align-items: flex-end;
-  gap: 6px;
-  height: 80px;
-  padding: 0 2px;
+  gap: 0.375rem;
+  height: 5rem;
+  padding: 0 0.125rem;
 }
 
 .adm-bar-col {
@@ -795,21 +795,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 0.3125rem;
 }
 
 .adm-bar {
   width: 100%;
-  border-radius: 4px 4px 0 0;
+  border-radius: 0.25rem 0.25rem 0 0;
   background: var(--c-surf3);
-  min-height: 4px;
+  min-height: 0.25rem;
   transition: height 0.3s ease;
 }
 
 .adm-bar-today { background: var(--c-accent) !important; }
 
 .adm-bar-lbl {
-  font-size: 9px !important;
+  font-size: 0.5625rem !important;
   color: var(--c-t3) !important;
   font-family: 'JetBrains Mono', monospace !important;
   line-height: 1 !important;
@@ -821,32 +821,32 @@
 .adm-right {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 0.875rem;
 }
 
 .adm-action-row {
   display: flex;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 /* ═══════════════════════════════════════════════════════════
    FOOTER
    ═══════════════════════════════════════════════════════════ */
 .adm-footer {
-  height: 42px;
-  min-height: 42px;
+  height: 2.625rem;
+  min-height: 2.625rem;
   background: var(--c-surf);
   border-top: 1px solid var(--c-bdr);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 1.5%;
   flex-shrink: 0;
   z-index: 10;
 }
 
 .adm-footer-copy {
-  font-size: 11.5px !important;
+  font-size: 0.71875rem !important;
   color: var(--c-t2) !important;
   line-height: 1 !important;
 }
@@ -859,7 +859,7 @@
 
 .adm-footer-version {
   font-family: 'JetBrains Mono', monospace !important;
-  font-size: 10.5px !important;
+  font-size: 0.65625rem !important;
   color: var(--c-t3) !important;
 }
 
@@ -867,7 +867,7 @@
    REACT DATA TABLE COMPONENT — custom styles
    ═══════════════════════════════════════════════════════════ */
 .adm-datatable-wrap {
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 0.75rem 0.75rem;
   overflow: hidden;
 }
 
@@ -889,7 +889,7 @@
   border-top: 1px solid var(--c-bdr) !important;
   background: var(--c-surf) !important;
   color: var(--c-t2) !important;
-  font-size: 12px !important;
+  font-size: 0.75rem !important;
 }
 
 /* Action popover menu for tables */
@@ -900,10 +900,10 @@
 .adm-action-menu-trigger {
   background: none;
   border: 1px solid var(--c-bdr);
-  border-radius: 6px;
-  padding: 4px 10px;
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.625rem;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 1rem;
   color: var(--c-t2);
   transition: background 0.1s;
   line-height: 1;
@@ -926,21 +926,21 @@
   top: 110%;
   background: var(--c-surf);
   border: 1px solid var(--c-bdr);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  border-radius: 0.625rem;
+  box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
   z-index: 20;
-  min-width: 190px;
+  min-width: 11.875rem;
   overflow: hidden;
 }
 
 .adm-action-menu-item {
   width: 100%;
   text-align: left;
-  padding: 9px 14px;
+  padding: 0.5625rem 0.875rem;
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-family: 'Roboto', sans-serif;
   transition: background 0.1s;
   line-height: 1.4;
@@ -961,32 +961,32 @@
 .adm-action-menu-divider {
   height: 1px;
   background: var(--c-bdr);
-  margin: 3px 0;
+  margin: 0.1875rem 0;
 }
 
 /* ═══════════════════════════════════════════════════════════
    FORM CONTROLS
    ═══════════════════════════════════════════════════════════ */
 .adm-label {
-  font-size: 10.5px !important;
+  font-size: 0.65625rem !important;
   font-weight: 600 !important;
   color: var(--c-t2) !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
   display: block !important;
-  margin-bottom: 5px !important;
+  margin-bottom: 0.3125rem !important;
   line-height: 1 !important;
 }
 
 .adm-input {
   display: block !important;
   width: 100% !important;
-  padding: 8px 10px !important;
+  padding: 0.5rem 0.625rem !important;
   border: 1px solid var(--c-bdr) !important;
-  border-radius: 7px !important;
+  border-radius: 0.4375rem !important;
   background: var(--c-surf) !important;
   color: var(--c-t0) !important;
-  font-size: 13px !important;
+  font-size: 0.8125rem !important;
   font-family: 'Roboto', system-ui, sans-serif !important;
   transition: border-color 0.15s, box-shadow 0.15s !important;
   box-sizing: border-box !important;
@@ -996,7 +996,7 @@
 .adm-input:focus {
   outline: none !important;
   border-color: var(--c-accent) !important;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12) !important;
+  box-shadow: 0 0 0 0.1875rem rgba(14, 165, 233, 0.12) !important;
 }
 
 .adm-input::placeholder {
@@ -1021,18 +1021,18 @@
   align-items: center !important;
   background: var(--c-surf) !important;
   border: 1px solid var(--c-bdr) !important;
-  border-radius: 7px !important;
+  border-radius: 0.4375rem !important;
   overflow: hidden !important;
   transition: border-color 0.15s, box-shadow 0.15s !important;
 }
 
 .adm-search:focus-within {
   border-color: var(--c-accent) !important;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12) !important;
+  box-shadow: 0 0 0 0.1875rem rgba(14, 165, 233, 0.12) !important;
 }
 
 .adm-search-icon {
-  padding: 0 9px !important;
+  padding: 0 0.5625rem !important;
   color: var(--c-t3) !important;
   display: flex !important;
   align-items: center !important;
@@ -1044,8 +1044,8 @@
   border: none !important;
   outline: none !important;
   background: transparent !important;
-  padding: 8px 10px 8px 0 !important;
-  font-size: 12.5px !important;
+  padding: 0.5rem 0.625rem 0.5rem 0 !important;
+  font-size: 0.78125rem !important;
   font-family: 'Roboto', sans-serif !important;
   color: var(--c-t0) !important;
   line-height: 1.4 !important;
@@ -1059,15 +1059,15 @@
    PROGRESS BAR
    ═══════════════════════════════════════════════════════════ */
 .adm-progress {
-  height: 6px !important;
+  height: 0.375rem !important;
   background: var(--c-surf3) !important;
-  border-radius: 3px !important;
+  border-radius: 0.1875rem !important;
   overflow: hidden !important;
 }
 
 .adm-progress-fill {
   height: 100% !important;
-  border-radius: 3px !important;
+  border-radius: 0.1875rem !important;
   transition: width 0.3s !important;
 }
 
@@ -1082,11 +1082,11 @@
 .adm-alert {
   display: flex !important;
   align-items: flex-start !important;
-  gap: 10px !important;
-  padding: 11px 14px !important;
-  border-radius: 8px !important;
+  gap: 0.625rem !important;
+  padding: 0.6875rem 0.875rem !important;
+  border-radius: 0.5rem !important;
   border: 1px solid !important;
-  font-size: 12.5px !important;
+  font-size: 0.78125rem !important;
   line-height: 1.4 !important;
 }
 
@@ -1101,18 +1101,18 @@
 .adm-tabs {
   display: flex !important;
   border-bottom: 1px solid var(--c-bdr) !important;
-  padding: 0 6px !important;
-  gap: 2px !important;
+  padding: 0 0.375rem !important;
+  gap: 0.125rem !important;
 }
 
 .adm-tab {
-  padding: 10px 14px !important;
-  font-size: 12.5px !important;
+  padding: 0.625rem 0.875rem !important;
+  font-size: 0.78125rem !important;
   font-weight: 500 !important;
   color: var(--c-t2) !important;
   background: none !important;
   border: none !important;
-  border-bottom: 2px solid transparent !important;
+  border-bottom: 0.125rem solid transparent !important;
   margin-bottom: -1px !important;
   cursor: pointer !important;
   font-family: 'Roboto', sans-serif !important;
@@ -1135,8 +1135,8 @@
 .adm-list-row {
   display: flex !important;
   align-items: center !important;
-  gap: 12px !important;
-  padding: 10px 16px !important;
+  gap: 0.75rem !important;
+  padding: 0.625rem 1rem !important;
   border-bottom: 1px solid var(--c-bdr) !important;
 }
 
@@ -1149,26 +1149,26 @@
    AVATARS
    ═══════════════════════════════════════════════════════════ */
 .adm-avatar-sm {
-  width: 34px !important;
-  height: 34px !important;
-  border-radius: 8px !important;
+  width: 2.125rem !important;
+  height: 2.125rem !important;
+  border-radius: 0.5rem !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 12px !important;
+  font-size: 0.75rem !important;
   font-weight: 700 !important;
   color: #fff !important;
   flex-shrink: 0 !important;
 }
 
 .adm-avatar-lg {
-  width: 72px !important;
-  height: 72px !important;
-  border-radius: 14px !important;
+  width: 4.5rem !important;
+  height: 4.5rem !important;
+  border-radius: 0.875rem !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 24px !important;
+  font-size: 1.5rem !important;
   font-weight: 700 !important;
   color: #fff !important;
   flex-shrink: 0 !important;
@@ -1178,19 +1178,19 @@
    SECTION HEADERS + DIVIDERS
    ═══════════════════════════════════════════════════════════ */
 .adm-sec-h {
-  font-size: 10px !important;
+  font-size: 0.625rem !important;
   font-weight: 700 !important;
   color: var(--c-t3) !important;
   text-transform: uppercase !important;
   letter-spacing: 0.8px !important;
-  margin: 0 0 10px !important;
+  margin: 0 0 0.625rem !important;
   line-height: 1 !important;
 }
 
 .adm-divider {
   height: 1px !important;
   background: var(--c-bdr) !important;
-  margin: 14px 0 !important;
+  margin: 0.875rem 0 !important;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1199,21 +1199,21 @@
 .adm-form-section {
   background: var(--c-surf) !important;
   border: 1px solid var(--c-bdr) !important;
-  border-radius: 12px !important;
+  border-radius: 0.75rem !important;
 }
 
 .adm-form-section-head {
-  padding: 12px 16px !important;
+  padding: 0.75rem 1rem !important;
   border-bottom: 1px solid var(--c-bdr) !important;
   display: flex !important;
   align-items: center !important;
-  gap: 8px !important;
+  gap: 0.5rem !important;
 }
 
 .adm-form-section-icon {
-  width: 26px !important;
-  height: 26px !important;
-  border-radius: 6px !important;
+  width: 1.625rem !important;
+  height: 1.625rem !important;
+  border-radius: 0.375rem !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1225,38 +1225,38 @@
 .adm-fsi-red   { background: var(--c-red-bg)    !important; color: var(--c-red)    !important; }
 .adm-fsi-amber { background: var(--c-amber-bg)  !important; color: var(--c-amber)  !important; }
 
-.adm-form-section-body { padding: 16px !important; }
+.adm-form-section-body { padding: 1rem !important; }
 
-.adm-form-grid   { display: grid !important; gap: 12px !important; }
+.adm-form-grid   { display: grid !important; gap: 0.75rem !important; }
 .adm-form-grid-2 { grid-template-columns: 1fr 1fr !important; }
 .adm-form-grid-3 { grid-template-columns: 1fr 1fr 1fr !important; }
-.adm-form-field  { display: flex !important; flex-direction: column !important; gap: 5px !important; }
+.adm-form-field  { display: flex !important; flex-direction: column !important; gap: 0.3125rem !important; }
 
 /* ═══════════════════════════════════════════════════════════
    VIEW TOGGLE
    ═══════════════════════════════════════════════════════════ */
 .adm-view-toggle {
   display: flex !important;
-  gap: 2px !important;
+  gap: 0.125rem !important;
   background: var(--c-surf2) !important;
   border: 1px solid var(--c-bdr) !important;
-  border-radius: 8px !important;
-  padding: 3px !important;
+  border-radius: 0.5rem !important;
+  padding: 0.1875rem !important;
 }
 
 .adm-view-btn {
-  padding: 5px 12px !important;
-  border-radius: 5px !important;
+  padding: 0.3125rem 0.75rem !important;
+  border-radius: 0.3125rem !important;
   border: none !important;
   background: none !important;
   cursor: pointer !important;
-  font-size: 12px !important;
+  font-size: 0.75rem !important;
   font-weight: 500 !important;
   color: var(--c-t2) !important;
   font-family: 'Roboto', sans-serif !important;
   display: flex !important;
   align-items: center !important;
-  gap: 5px !important;
+  gap: 0.3125rem !important;
   transition: all 0.15s !important;
   white-space: nowrap !important;
   line-height: 1 !important;
@@ -1265,7 +1265,7 @@
 .adm-view-btn.active {
   background: var(--c-surf) !important;
   color: var(--c-t0) !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 1px 0.1875rem rgba(0,0,0,0.1) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1280,7 +1280,7 @@
   cursor: pointer !important;
   color: var(--c-accent) !important;
   font-family: 'Roboto', sans-serif !important;
-  font-size: 12.5px !important;
+  font-size: 0.78125rem !important;
   font-weight: 600 !important;
   text-decoration: none !important;
   transition: opacity 0.15s !important;
@@ -1289,9 +1289,9 @@
 .adm-link-btn:hover { opacity: 0.75 !important; }
 
 .adm-back-btn {
-  width: 32px !important;
-  height: 32px !important;
-  border-radius: 7px !important;
+  width: 2rem !important;
+  height: 2rem !important;
+  border-radius: 0.4375rem !important;
   border: 1px solid var(--c-bdr) !important;
   background: var(--c-surf2) !important;
   display: flex !important;
@@ -1306,7 +1306,7 @@
 .adm-back-btn:hover { background: var(--c-surf3) !important; }
 
 .adm-card-footer {
-  padding: 10px 18px !important;
+  padding: 0.625rem 1.125rem !important;
   border-top: 1px solid var(--c-bdr) !important;
   background: var(--c-surf2) !important;
   display: flex !important;
@@ -1318,8 +1318,8 @@
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  padding: 5px 0 !important;
-  font-size: 12.5px !important;
+  padding: 0.3125rem 0 !important;
+  font-size: 0.78125rem !important;
   border-bottom: 1px solid var(--c-surf3) !important;
 }
 
