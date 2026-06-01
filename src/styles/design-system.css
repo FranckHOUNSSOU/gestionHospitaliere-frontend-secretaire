@@ -78,6 +78,18 @@
   line-height: 1.5;
 }
 
+.adm-shell {
+  display: flex;
+  flex-direction: row;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--c-bg);
+  color: var(--c-t0);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 /* ═══════════════════════════════════════════════════════════
    TOPBAR
    ═══════════════════════════════════════════════════════════ */
