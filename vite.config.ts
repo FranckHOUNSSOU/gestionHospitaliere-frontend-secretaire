@@ -8,7 +8,7 @@ export default defineConfig({
     port: 5175,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'https://gestionhospitaliere-backend.onrender.com',
         changeOrigin: true,
       },
     },

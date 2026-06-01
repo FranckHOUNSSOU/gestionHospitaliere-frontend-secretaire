@@ -12,6 +12,8 @@ export interface User {
   role: UserRole;
   nom: string;
   prenom: string;
+  pole: string | null;
+  poleId: string | null;
   service: string | null;
 }
 

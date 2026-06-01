@@ -1,8 +1,11 @@
-import { useState } from 'react';
-import { ArrowLeft, Save, CalendarDays } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import { ArrowLeft, Save, CalendarDays, Search, X, Loader2 } from 'lucide-react';
 import { useNavigation } from '../../../context/NavigationContext';
-import { patients, departments } from '../../../services/mockData';
+import { useAuth } from '../../../context/AuthContext';
 import { useDoctors } from '../../../context/DoctorContext';
+import { createRendezVous } from '../../../services/appointmentService';
+import { patientsData, type Patient } from '../../../services/patients';
 
 const timeSlots = [
   '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00',
@@ -12,38 +15,127 @@ const timeSlots = [
 const appointmentTypes = ['Consultation', 'Suivi', 'Contrôle', 'Examen', 'Pré-opératoire', 'Urgence', 'Vaccination', 'Autre'];
 
 export default function AppointmentForm() {
-  const { navigate } = useNavigation();
-  const { doctors } = useDoctors();
+  const { navigate }   = useNavigation();
+  const { user }       = useAuth();
+  const { doctors }    = useDoctors();
+  const location       = useLocation();
+  const prefillDate    = (location.state as { prefillDate?: string } | null)?.prefillDate ?? '';
+
+  // ── Patient combobox ──────────────────────────────────────────────────────
+  const [patientQuery,    setPatientQuery]    = useState('');
+  const [patientResults,  setPatientResults]  = useState<Patient[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [showDropdown,    setShowDropdown]    = useState(false);
+  const [searching,       setSearching]       = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Formulaire ────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
-    patientId: '', doctorId: '', department: '',
-    date: '', time: '', duration: '30', type: 'Consultation', notes: '',
+    serviceFilter: '', doctorId: '',
+    date: prefillDate, time: '', duration: '30', type: 'Consultation', notes: '',
   });
-  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error,  setError]  = useState<string | null>(null);
+  const [saved,  setSaved]  = useState(false);
+
+  // ── Fermer dropdown au clic extérieur ─────────────────────────────────────
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  // ── Recherche patient (debounce 300ms) ────────────────────────────────────
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (!patientQuery.trim() || patientQuery.length < 2) {
+      setPatientResults([]);
+      setShowDropdown(false);
+      return;
+    }
+    searchTimer.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const data = await patientsData.rechercher(patientQuery);
+        setPatientResults(data);
+        setShowDropdown(true);
+      } catch {
+        setPatientResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+  }, [patientQuery]);
+
+  function selectPatient(p: Patient) {
+    setSelectedPatient(p);
+    setPatientQuery(`${p.prenom} ${p.nom} — ${p.numeroIpp}`);
+    setShowDropdown(false);
+  }
+
+  function clearPatient() {
+    setSelectedPatient(null);
+    setPatientQuery('');
+    setPatientResults([]);
+  }
+
+  // ── Médecins filtrés par service ──────────────────────────────────────────
+  const serviceOptions = Array.from(new Set(doctors.map((d) => d.department))).filter(Boolean).sort();
+  const filteredDoctors = form.serviceFilter
+    ? doctors.filter((d) => d.department === form.serviceFilter)
+    : doctors;
+  const selectedDoctor = doctors.find((d) => d.id === form.doctorId);
 
   function handleChange(field: string, value: string) {
     setForm((prev) => {
       const updated = { ...prev, [field]: value };
-      if (field === 'department') updated.doctorId = '';
+      if (field === 'serviceFilter') updated.doctorId = '';
       return updated;
     });
   }
 
-  const filteredDoctors = form.department ? doctors.filter((d) => d.department === form.department) : doctors;
-  const selectedPatient = patients.find((p) => p.id === form.patientId);
-  const selectedDoctor = doctors.find((d) => d.id === form.doctorId);
-
-  function handleSave() {
-    setSaved(true);
-    setTimeout(() => navigate('appointments'), 1000);
+  // ── Enregistrement ────────────────────────────────────────────────────────
+  async function handleSave() {
+    if (!selectedPatient || !form.doctorId || !form.date || !form.time) {
+      setError('Veuillez renseigner le patient, le médecin, la date et l\'heure.');
+      return;
+    }
+    setError(null);
+    setSaving(true);
+    try {
+      await createRendezVous({
+        patientId:     selectedPatient.id,
+        medecinUserId: form.doctorId,
+        dateHeure:     `${form.date}T${form.time}:00`,
+        dureeMinutes:  Number(form.duration),
+        type:          form.type,
+        motif:         form.notes || undefined,
+      });
+      setSaved(true);
+      setTimeout(() => navigate('dashboard'), 1200);
+    } catch (e: any) {
+      setError(e?.message ?? 'Erreur lors de l\'enregistrement.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+      {/* En-tête */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button onClick={() => navigate('appointments')} className="adm-back-btn"><ArrowLeft size={16} /></button>
         <div>
           <p style={{ fontSize: '16px', fontWeight: 700, color: 'var(--c-t0)', margin: 0 }}>Nouveau rendez-vous</p>
-          <p style={{ fontSize: '12px', color: 'var(--c-t2)', margin: '2px 0 0' }}>Planifier un rendez-vous médical</p>
+          <p style={{ fontSize: '12px', color: 'var(--c-t2)', margin: '2px 0 0' }}>
+            Pôle : <strong>{user?.pole ?? '—'}</strong>
+          </p>
         </div>
       </div>
 
@@ -53,44 +145,115 @@ export default function AppointmentForm() {
           Rendez-vous enregistré avec succès !
         </div>
       )}
+      {error && (
+        <div className="adm-alert adm-alert-error">{error}</div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: '14px', alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {/* Patient & Médecin */}
+
+          {/* ── Patient & Médecin ── */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
-              <p className="adm-card-title">Patient & Médecin</p>
+              <p className="adm-card-title">Patient &amp; Médecin</p>
             </div>
-            <div className="adm-form-section-body" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className="adm-form-section-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+              {/* Recherche patient */}
               <div className="adm-form-field">
-                <label className="adm-label">Patient *</label>
-                <select value={form.patientId} onChange={(e) => handleChange('patientId', e.target.value)} className="adm-input">
-                  <option value="">Sélectionner un patient</option>
-                  {patients.map((p) => (
-                    <option key={p.id} value={p.id}>{p.firstName} {p.lastName} — {p.phone}</option>
-                  ))}
-                </select>
+                <label className="adm-label">Rechercher un patient (nom, prénom ou IPP) *</label>
+                <div ref={dropdownRef} style={{ position: 'relative' }}>
+                  <div className="adm-search" style={{ width: '100%' }}>
+                    <span className="adm-search-icon">
+                      {searching
+                        ? <Loader2 size={13} style={{ animation: 'spin 0.7s linear infinite' }} />
+                        : <Search size={13} />}
+                    </span>
+                    <input
+                      className="adm-search-input"
+                      placeholder="Ex : ZANMENOU ou IPP-2026-0004"
+                      value={patientQuery}
+                      onChange={(e) => { setSelectedPatient(null); setPatientQuery(e.target.value); }}
+                      onFocus={() => patientResults.length > 0 && setShowDropdown(true)}
+                    />
+                    {patientQuery && (
+                      <button
+                        type="button"
+                        onClick={clearPatient}
+                        style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-t3)', display: 'flex', alignItems: 'center' }}
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Dropdown résultats */}
+                  {showDropdown && patientResults.length > 0 && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--c-bg)', border: '1px solid var(--c-bdr)', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', marginTop: '4px', maxHeight: '240px', overflowY: 'auto' }}>
+                      {patientResults.map((p) => (
+                        <div
+                          key={p.id}
+                          onMouseDown={() => selectPatient(p)}
+                          style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid var(--c-bdr)', transition: 'background 0.1s' }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--c-surf2)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          <div style={{ width: 34, height: 34, borderRadius: '8px', background: 'linear-gradient(135deg,#60a5fa,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                            {p.prenom[0]}{p.nom[0]}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ margin: 0, fontWeight: 600, fontSize: '13px', color: 'var(--c-t1)' }}>
+                              {p.prenom} {p.nom}
+                            </p>
+                            <p style={{ margin: 0, fontSize: '11px', color: 'var(--c-t3)' }}>
+                              {p.numeroIpp}
+                              {p.dateNaissance && ` · ${new Date(p.dateNaissance).toLocaleDateString('fr-FR')}`}
+                              {p.telephoneMobile && ` · ${p.telephoneMobile}`}
+                            </p>
+                          </div>
+                          {p.statutProfil === 'Incomplet' && (
+                            <span style={{ fontSize: '10px', background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', borderRadius: '99px', padding: '1px 7px', fontWeight: 600, flexShrink: 0 }}>
+                              Incomplet
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {showDropdown && patientResults.length === 0 && !searching && patientQuery.trim().length >= 2 && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--c-bg)', border: '1px solid var(--c-bdr)', borderRadius: '8px', padding: '16px', textAlign: 'center', fontSize: '13px', color: 'var(--c-t3)', marginTop: '4px' }}>
+                      Aucun patient trouvé
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Service + Médecin */}
               <div className="adm-form-grid adm-form-grid-2">
                 <div className="adm-form-field">
-                  <label className="adm-label">Service *</label>
-                  <select value={form.department} onChange={(e) => handleChange('department', e.target.value)} className="adm-input">
-                    <option value="">Sélectionner un service</option>
-                    {departments.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
+                  <label className="adm-label">Service</label>
+                  <select value={form.serviceFilter} onChange={(e) => handleChange('serviceFilter', e.target.value)} className="adm-input">
+                    <option value="">Tous les services</option>
+                    {serviceOptions.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div className="adm-form-field">
                   <label className="adm-label">Médecin *</label>
                   <select value={form.doctorId} onChange={(e) => handleChange('doctorId', e.target.value)} className="adm-input">
                     <option value="">Sélectionner un médecin</option>
-                    {filteredDoctors.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    {filteredDoctors.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name}{d.serviceCode ? ` — ${d.serviceCode}` : ''}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Date et heure */}
+          {/* ── Date et heure ── */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
               <div className="adm-form-section-icon adm-fsi-blue"><CalendarDays size={13} /></div>
@@ -129,7 +292,7 @@ export default function AppointmentForm() {
             </div>
           </div>
 
-          {/* Détails */}
+          {/* ── Détails ── */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
               <p className="adm-card-title">Détails du rendez-vous</p>
@@ -144,40 +307,46 @@ export default function AppointmentForm() {
               <div className="adm-form-field">
                 <label className="adm-label">Notes / Motif</label>
                 <textarea value={form.notes} onChange={(e) => handleChange('notes', e.target.value)}
-                  rows={3} className="adm-input" placeholder="Motif de consultation, symptômes..." />
+                  rows={3} className="adm-input" placeholder="Motif de consultation, symptômes…" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Sidebar */}
+        {/* ── Sidebar ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+          {/* Patient sélectionné */}
           {selectedPatient && (
             <div style={{ background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-bd)', borderRadius: '10px', padding: '14px' }}>
               <p className="adm-sec-h" style={{ color: 'var(--c-accent)' }}>Patient sélectionné</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div className="adm-avatar-sm" style={{ background: 'var(--c-accent)', width: 38, height: 38 }}>
-                  {selectedPatient.firstName[0]}{selectedPatient.lastName[0]}
+                  {selectedPatient.prenom[0]}{selectedPatient.nom[0]}
                 </div>
                 <div>
-                  <p className="adm-cell-name" style={{ color: 'var(--c-accent)' }}>{selectedPatient.firstName} {selectedPatient.lastName}</p>
-                  <p className="adm-cell-mono" style={{ color: 'var(--c-accent)' }}>{selectedPatient.phone}</p>
+                  <p className="adm-cell-name" style={{ color: 'var(--c-accent)' }}>
+                    {selectedPatient.prenom} {selectedPatient.nom}
+                  </p>
+                  <p className="adm-cell-mono" style={{ color: 'var(--c-accent)' }}>{selectedPatient.numeroIpp}</p>
                 </div>
               </div>
             </div>
           )}
 
+          {/* Récapitulatif */}
           <div className="adm-card">
             <div className="adm-card-head">
               <p className="adm-card-title">Récapitulatif RDV</p>
             </div>
             <div className="adm-card-body">
               {[
-                { label: 'Médecin',  value: selectedDoctor?.name ?? '—' },
-                { label: 'Date',     value: form.date ? new Date(form.date).toLocaleDateString('fr-FR') : '—' },
-                { label: 'Heure',    value: form.time || '—' },
-                { label: 'Durée',    value: `${form.duration} min` },
-                { label: 'Type',     value: form.type },
+                { label: 'Pôle',    value: user?.pole ?? '—' },
+                { label: 'Médecin', value: selectedDoctor ? `${selectedDoctor.name}${selectedDoctor.serviceCode ? ` (${selectedDoctor.serviceCode})` : ''}` : '—' },
+                { label: 'Date',    value: form.date ? new Date(form.date).toLocaleDateString('fr-FR') : '—' },
+                { label: 'Heure',   value: form.time || '—' },
+                { label: 'Durée',   value: `${form.duration} min` },
+                { label: 'Type',    value: form.type },
               ].map(({ label, value }) => (
                 <div key={label} className="adm-summary-row">
                   <span className="adm-summary-k">{label}</span>
@@ -188,10 +357,12 @@ export default function AppointmentForm() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <button onClick={handleSave} className="adm-btn adm-btn-primary" style={{ height: '38px', justifyContent: 'center', gap: '6px' }}>
-              <Save size={14} /> Confirmer le rendez-vous
+            <button onClick={handleSave} disabled={saving} className="adm-btn adm-btn-primary"
+              style={{ height: '38px', justifyContent: 'center', gap: '6px' }}>
+              <Save size={14} /> {saving ? 'Enregistrement…' : 'Confirmer le rendez-vous'}
             </button>
-            <button onClick={() => navigate('appointments')} className="adm-btn" style={{ height: '38px', justifyContent: 'center' }}>
+            <button onClick={() => navigate('appointments')} className="adm-btn"
+              style={{ height: '38px', justifyContent: 'center' }}>
               Annuler
             </button>
           </div>
