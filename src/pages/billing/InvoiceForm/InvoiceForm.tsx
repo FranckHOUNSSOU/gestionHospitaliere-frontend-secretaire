@@ -73,7 +73,6 @@ export default function InvoiceForm() {
   const [results,       setResults]       = useState<Patient[]>([]);
   const [searching,     setSearching]     = useState(false);
   const [showDropdown,  setShowDropdown]  = useState(false);
-  const [patient,       setPatient]       = useState<Patient | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -105,7 +104,6 @@ export default function InvoiceForm() {
   }, [query]);
 
   async function selectPatient(p: Patient) {
-    setPatient(p);
     setQuery(`${p.prenom} ${p.nom} — ${p.numeroIpp}`);
     setShowDropdown(false);
     setLoading(true); setErreur(null);
@@ -118,7 +116,7 @@ export default function InvoiceForm() {
   }
 
   function clearPatient() {
-    setPatient(null); setQuery(''); setResults([]); setApercu(null); setErreur(null);
+    setQuery(''); setResults([]); setApercu(null); setErreur(null);
   }
 
   function handlePrint() { window.print(); }
@@ -163,7 +161,7 @@ export default function InvoiceForm() {
                   className="adm-search-input"
                   placeholder="Nom, prénom ou numéro IPP…"
                   value={query}
-                  onChange={e => { setPatient(null); setQuery(e.target.value); }}
+                  onChange={e => { setApercu(null); setQuery(e.target.value); }}
                   onFocus={() => results.length > 0 && setShowDropdown(true)}
                 />
                 {query && (
