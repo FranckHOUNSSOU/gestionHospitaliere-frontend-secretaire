@@ -3,32 +3,32 @@
   background: var(--c-surf2);
   border: 1px solid var(--c-bdr);
   border-radius: 10px;
-  padding: 12px 14px;
+  padding: 0.75rem 0.875rem;
 }
 
 .adm-sys-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px !important;
+  font-size: 0.6875rem !important;
   line-height: 1.4;
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
 }
 
 .adm-sys-row:last-child { margin-bottom: 0; }
 .adm-sys-k { color: var(--c-t2) !important; }
 .adm-sys-v {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px !important;
+  font-size: 0.6875rem !important;
   font-weight: 500 !important;
   color: var(--c-green) !important;
 }
 
 .adm-sys-track {
-  height: 3px;
+  height: 0.1875rem;
   background: var(--c-bdr);
   border-radius: 2px;
-  margin: 5px 0 8px;
+  margin: 0.3125rem 0 0.5rem;
 }
 
 .adm-sys-fill {
