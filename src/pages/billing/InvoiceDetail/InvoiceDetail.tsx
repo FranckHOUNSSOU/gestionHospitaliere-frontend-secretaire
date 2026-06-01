@@ -141,12 +141,8 @@ export default function InvoiceDetail() {
 
           {/* Gauche */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textAlign: 'center' }}>
-            <img src="/armoiries-benin.png" alt="Armoiries du Bénin" style={{ height: 68, objectFit: 'contain' }}
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-            <p style={{ margin: 0, fontSize: 9, fontWeight: 700, color: '#1e3a5f', lineHeight: 1.5 }}>
-              MINISTÈRE DE LA SANTÉ<br />
-              <span style={{ fontWeight: 400, fontSize: 8 }}>République du Bénin</span>
-            </p>
+            <img src="/benin%20embl%C3%A8me.png" alt="Armoiries du Bénin" style={{ height: 72, objectFit: 'contain' }} />
+            
           </div>
 
           {/* Centre */}
