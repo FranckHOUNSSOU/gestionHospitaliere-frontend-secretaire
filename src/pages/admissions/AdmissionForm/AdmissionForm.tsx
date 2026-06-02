@@ -57,6 +57,8 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
     motifHospitalisation:  '',
     dateAdmission:         new Date().toISOString().slice(0, 16),
     numeroSejour:          genNumeroSejour(),
+    numeroChambre:         '',
+    numeroLit:             '',
   });
 
   // Patient sélectionné
@@ -155,7 +157,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
     setSaving(true);
     setSaveErr(null);
     try {
-      await client.post(`/sejours/patient/${selectedPatient.id}`, {
+      const { data: sejour } = await client.post<{ id: string }>(`/sejours/patient/${selectedPatient.id}`, {
         numeroSejour:         form.numeroSejour,
         typeSejour:           form.typeSejour,
         medecinResponsableId: form.medecinResponsableId || undefined,
@@ -163,6 +165,18 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
         motifHospitalisation: form.motifHospitalisation.trim(),
         dateAdmission:        new Date(form.dateAdmission).toISOString(),
       });
+
+      // Pour une hospitalisation, enregistrer l'affectation lit/chambre
+      if (form.typeSejour === 'Hospitalisation') {
+        const serviceNom = services.find(s => s.id === selectedService)?.nom ?? '';
+        await client.post(`/sejours/${sejour.id}/mouvements`, {
+          dateHeureMouvement: new Date(form.dateAdmission).toISOString(),
+          serviceArrivee:     serviceNom,
+          numeroChambre:      form.numeroChambre || undefined,
+          numeroLit:          form.numeroLit     || undefined,
+        });
+      }
+
       setSaved(true);
       setTimeout(() => navigate('admissions'), 1200);
     } catch (err: unknown) {
@@ -447,6 +461,28 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                   />
                 </div>
 
+                {/* Chambre / Lit — uniquement pour Hospitalisation */}
+                {form.typeSejour === 'Hospitalisation' && (<>
+                  <div className="adm-form-field">
+                    <label className="adm-label">N° de chambre</label>
+                    <input
+                      className="adm-input"
+                      placeholder="Ex : CH-201"
+                      value={form.numeroChambre}
+                      onChange={e => setForm(f => ({ ...f, numeroChambre: e.target.value }))}
+                    />
+                  </div>
+                  <div className="adm-form-field">
+                    <label className="adm-label">N° de lit</label>
+                    <input
+                      className="adm-input"
+                      placeholder="Ex : LIT-3"
+                      value={form.numeroLit}
+                      onChange={e => setForm(f => ({ ...f, numeroLit: e.target.value }))}
+                    />
+                  </div>
+                </>)}
+
               </div>
             </div>
           </div>
@@ -490,6 +526,10 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                 { label: 'Médecin', value: selectedMedecin ? `Dr. ${selectedMedecin.prenom} ${selectedMedecin.nom}` : '—' },
                 { label: 'Mode',    value: form.modeEntree || '—' },
                 { label: 'Entrée',  value: form.dateAdmission ? new Date(form.dateAdmission).toLocaleDateString('fr-FR') : '—' },
+                ...(form.typeSejour === 'Hospitalisation' ? [
+                  { label: 'Chambre', value: form.numeroChambre || '—' },
+                  { label: 'Lit',     value: form.numeroLit     || '—' },
+                ] : []),
               ].map(({ label, value }) => (
                 <div key={label} className="adm-summary-row">
                   <span className="adm-summary-k">{label}</span>
