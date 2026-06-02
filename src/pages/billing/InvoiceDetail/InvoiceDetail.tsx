@@ -133,7 +133,7 @@ export default function InvoiceDetail() {
 
           {/* Gauche */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textAlign: 'center' }}>
-            <img src="/benin%20embl%C3%A8me.png" alt="Armoiries du Bénin" style={{ height: 115, objectFit: 'contain' }} />
+            <img src="/benin_embleme.png" alt="Armoiries du Bénin" style={{ height: 115, objectFit: 'contain' }} />
             
           </div>
 
