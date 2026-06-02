@@ -181,6 +181,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
     try {
       const { data: sejour } = await client.post<{ id: string }>(`/sejours/patient/${selectedPatient.id}`, {
         numeroSejour:         form.numeroSejour,
+        typeSejour:           form.typeSejour,
         medecinResponsableId: form.medecinResponsableId || undefined,
         modeEntree:           form.modeEntree,
         motifHospitalisation: form.motifHospitalisation.trim(),
