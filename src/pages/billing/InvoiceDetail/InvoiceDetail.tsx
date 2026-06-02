@@ -104,10 +104,20 @@ export default function InvoiceDetail() {
   return (
     <>
       <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
         @media print {
-          .no-print { display: none !important; }
-          body, html { background: white !important; margin: 0; }
-          #facture-print { padding: 12px !important; border: none !important; }
+          body * { visibility: hidden; }
+          #facture-print, #facture-print * { visibility: visible; }
+          #facture-print {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            padding: 16px !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+          }
+          @page { margin: 10mm; }
         }
       `}</style>
 
