@@ -359,7 +359,7 @@ export default function AdmissionList() {
                           </button>
                           <button
                             onClick={() => setSortieModal({ sejourId: adm.id, patientName: adm.patientName })}
-                            title="Enregistrer le dossier"
+                            title="Enregistrer la sortie"
                             disabled={adm.status !== 'active'}
                             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '30px', height: '30px', borderRadius: '6px', border: '1px solid var(--c-bdr)', background: 'var(--c-bg2)', color: adm.status === 'active' ? '#ef4444' : 'var(--c-t3)', cursor: adm.status === 'active' ? 'pointer' : 'not-allowed', opacity: adm.status === 'active' ? 1 : 0.4, transition: 'background 0.15s, color 0.15s' }}
                             onMouseEnter={e => { if (adm.status !== 'active') return; (e.currentTarget as HTMLButtonElement).style.background = '#ef4444'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
