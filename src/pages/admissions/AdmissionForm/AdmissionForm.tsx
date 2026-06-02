@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Save, BedDouble, User, Stethoscope, Search, X, Loader2 } from 'lucide-react';
 import { useNavigation } from '../../../context/NavigationContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -167,7 +167,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
       });
 
       // Pour une hospitalisation, enregistrer l'affectation lit/chambre
-      if (form.typeSejour === 'Hospitalisation') {
+      if (form.typeSejour === 'Hospitalisation' || form.typeSejour === 'Urgences') {
         const serviceNom = services.find(s => s.id === selectedService)?.nom ?? '';
         await client.post(`/sejours/${sejour.id}/mouvements`, {
           dateHeureMouvement: new Date(form.dateAdmission).toISOString(),
@@ -462,7 +462,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                 </div>
 
                 {/* Chambre / Lit — uniquement pour Hospitalisation */}
-                {form.typeSejour === 'Hospitalisation' && (<>
+                {(form.typeSejour === 'Hospitalisation' || form.typeSejour === 'Urgences') && (<>
                   <div className="adm-form-field">
                     <label className="adm-label">N° de chambre</label>
                     <input
@@ -526,7 +526,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                 { label: 'Médecin', value: selectedMedecin ? `Dr. ${selectedMedecin.prenom} ${selectedMedecin.nom}` : '—' },
                 { label: 'Mode',    value: form.modeEntree || '—' },
                 { label: 'Entrée',  value: form.dateAdmission ? new Date(form.dateAdmission).toLocaleDateString('fr-FR') : '—' },
-                ...(form.typeSejour === 'Hospitalisation' ? [
+                ...(form.typeSejour === 'Hospitalisation' || form.typeSejour === 'Urgences' ? [
                   { label: 'Chambre', value: form.numeroChambre || '—' },
                   { label: 'Lit',     value: form.numeroLit     || '—' },
                 ] : []),
