@@ -147,6 +147,7 @@ export default function AdmissionList() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
+    <>
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
       {/* ── Stats ── */}
@@ -389,6 +390,7 @@ export default function AdmissionList() {
         }}
       />
     )}
-    <style>{@keyframes spin { to { transform: rotate(360deg); } }}</style>
+    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </>
   );
 }
