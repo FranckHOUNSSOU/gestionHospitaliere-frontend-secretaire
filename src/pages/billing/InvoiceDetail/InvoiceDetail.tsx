@@ -1,6 +1,7 @@
 import './InvoiceDetail.css';
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Printer, Loader2 } from 'lucide-react';
+import client from '../../../services/clients';
 import { useNavigation } from '../../../context/NavigationContext';
 import { getApercuFacture, type ApercuFacture } from '../../../services/facturationService';
 
@@ -71,9 +72,20 @@ export default function InvoiceDetail() {
   const { navigate, nav } = useNavigation();
   const patientId = nav.selectedId;
 
-  const [apercu,  setApercu]  = useState<ApercuFacture | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [erreur,  setErreur]  = useState<string | null>(null);
+  const [apercu,   setApercu]   = useState<ApercuFacture | null>(null);
+  const [loading,  setLoading]  = useState(true);
+  const [erreur,   setErreur]   = useState<string | null>(null);
+  const [printing, setPrinting] = useState(false);
+
+  async function handlePrint() {
+    if (!patientId || !apercu) return;
+    setPrinting(true);
+    try {
+      await client.post(`/facturation/emettre/${patientId}`);
+    } catch { /* erreur non bloquante */ }
+    finally { setPrinting(false); }
+    window.print();
+  }
 
   useEffect(() => {
     if (!patientId) { setLoading(false); return; }
@@ -112,12 +124,12 @@ export default function InvoiceDetail() {
             position: absolute;
             top: 0; left: 0;
             width: 100%;
-            padding: 16px !important;
+            padding: 20px 24px !important;
             border: none !important;
             border-radius: 0 !important;
             box-shadow: none !important;
           }
-          @page { margin: 10mm; }
+          @page { margin: 0; }
         }
       `}</style>
 
@@ -130,8 +142,10 @@ export default function InvoiceDetail() {
           </p>
           <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--c-t2)' }}>IPP : {apercu.patient.numeroIpp}</p>
         </div>
-        <button onClick={() => window.print()} className="adm-btn adm-btn-primary" style={{ height: 36, gap: 6 }}>
-          <Printer size={14} /> Imprimer
+        <button onClick={handlePrint} disabled={printing} className="adm-btn adm-btn-primary" style={{ height: 36, gap: 6 }}>
+          {printing
+            ? <><Loader2 size={14} style={{ animation: 'spin 0.7s linear infinite' }} /> Enregistrement…</>
+            : <><Printer size={14} /> Imprimer</>}
         </button>
       </div>
 
