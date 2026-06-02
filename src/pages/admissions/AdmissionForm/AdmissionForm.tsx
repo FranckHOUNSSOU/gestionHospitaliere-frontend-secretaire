@@ -17,6 +17,13 @@ interface Service {
   nom: string;
   code: string;
 }
+interface Chambre {
+  id: string;
+  numero: string;
+  designation: string | null;
+  etage: string | null;
+  capacite: number;
+}
 
 const TYPES_SEJOUR = [
   { value: 'Hospitalisation', label: 'Hospitalisation', desc: 'Admission avec lit/chambre assigné' },
@@ -109,6 +116,10 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
   const [medecinsLoading, setMedecinsLoading] = useState(false);
   const [medecinsErr,     setMedecinsErr]     = useState<string | null>(null);
 
+  // ── Chambres du service ──────────────────────────────────────────────────
+  const [chambres,        setChambres]        = useState<Chambre[]>([]);
+  const [chambresLoading, setChambresLoading] = useState(false);
+
     // ── Chargement des services du pôle ──────────────────────────────────────────
     useEffect(() => {
       if (!poleId) return;
@@ -138,6 +149,17 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
     .catch(() => setMedecinsErr('Impossible de charger les médecins du service.'))
     .finally(() => setMedecinsLoading(false));
 }, [selectedService]);
+
+  useEffect(() => {
+    const needsRoom = form.typeSejour === 'Hospitalisation' || form.typeSejour === 'Urgences';
+    if (!selectedService || !needsRoom) { setChambres([]); return; }
+    setChambresLoading(true);
+    client
+      .get<Chambre[]>(\/chambres/service/\\)
+      .then(res => setChambres(res.data.filter(c => (c as any).estActive !== false)))
+      .catch(() => setChambres([]))
+      .finally(() => setChambresLoading(false));
+  }, [selectedService, form.typeSejour]);
 
   // ── Sauvegarde ────────────────────────────────────────────────────────────
   const [saving,   setSaving]   = useState(false);
@@ -461,23 +483,46 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                   />
                 </div>
 
-                {/* Chambre / Lit — uniquement pour Hospitalisation */}
+                {/* Chambre / Lit — Hospitalisation et Urgences */}
                 {(form.typeSejour === 'Hospitalisation' || form.typeSejour === 'Urgences') && (<>
                   <div className="adm-form-field">
-                    <label className="adm-label">N° de chambre</label>
-                    <input
-                      className="adm-input"
-                      placeholder="Ex : CH-201"
-                      value={form.numeroChambre}
-                      onChange={e => setForm(f => ({ ...f, numeroChambre: e.target.value }))}
-                    />
+                    <label className="adm-label">
+                      Chambre
+                      {!selectedService && <span style={{ color: '#f97316', fontSize: 10, marginLeft: 6 }}>— sélectionnez d'abord un service</span>}
+                    </label>
+                    {chambresLoading ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', fontSize: 12, color: 'var(--c-t3)' }}>
+                        <Loader2 size={13} style={{ animation: 'spin 0.7s linear infinite' }} /> Chargement…
+                      </div>
+                    ) : (
+                      <select
+                        className="adm-input"
+                        value={form.numeroChambre}
+                        disabled={!selectedService}
+                        onChange={e => setForm(f => ({ ...f, numeroChambre: e.target.value, numeroLit: '' }))}
+                      >
+                        <option value="">
+                          {!selectedService
+                            ? '— Sélectionnez un service —'
+                            : chambres.length === 0
+                              ? '— Aucune chambre disponible —'
+                              : '— Choisir une chambre —'}
+                        </option>
+                        {chambres.map(c => (
+                          <option key={c.id} value={c.numero}>
+                            {c.numero}{c.designation ? ` — ${c.designation}` : ''}{c.etage ? ` (${c.etage})` : ''} · {c.capacite} lit{c.capacite > 1 ? 's' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                   <div className="adm-form-field">
                     <label className="adm-label">N° de lit</label>
                     <input
                       className="adm-input"
-                      placeholder="Ex : LIT-3"
+                      placeholder="Ex : 1, 2, 3…"
                       value={form.numeroLit}
+                      disabled={!form.numeroChambre}
                       onChange={e => setForm(f => ({ ...f, numeroLit: e.target.value }))}
                     />
                   </div>
