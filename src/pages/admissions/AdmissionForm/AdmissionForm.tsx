@@ -155,7 +155,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
     if (!selectedService || !needsRoom) { setChambres([]); return; }
     setChambresLoading(true);
     client
-      .get<Chambre[]>(\/chambres/service/\\)
+      .get<Chambre[]>(`/chambres/service/${selectedService}`)
       .then(res => setChambres(res.data.filter(c => (c as any).estActive !== false)))
       .catch(() => setChambres([]))
       .finally(() => setChambresLoading(false));
