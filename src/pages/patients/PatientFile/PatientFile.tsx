@@ -39,7 +39,7 @@ interface Traitement{ id: string; nomMedicament: string; classe?: string; posolo
 interface Contact   { id: string; nom: string; prenom: string; lienParente: string; telephone: string; estPersonneConfiance?: boolean; }
 interface Couverture{ id: string; typeCouverture: string; nomOrganisme: string; numeroAssure: string; statut: string; dateDebut: string; estActive: boolean; }
 interface Diagnostic{ id: string; codeCim10: string; libelle: string; type: string; statut: string; }
-interface SoinInfirmier { id: string; cible: string; donneesObservees?: string | null; actionsRealisees?: string | null; resultatsObtenus?: string | null; dateHeure: string; valide: boolean; }
+interface SoinInfirmier { id: string; cible: string; donneesObservees?: string | null; actionsRealisees?: string | null; resultatsObtenus?: string | null; dateHeure: string; valide: boolean; saisiParNom?: string | null; valideParNom?: string | null; dateValidation?: string | null; }
 interface Sejour    { id: string; numeroSejour: string; dateAdmission: string; typeSejour?: string; }
 
 // ── Composant Modal générique ─────────────────────────────────────────────────
@@ -302,6 +302,10 @@ function ModalSynthese({ dossier, sejour, diagList, soinsList, onClose }: {
                 {s.donneesObservees && <div style={{ fontSize: 11, color: 'var(--c-t2)' }}>Obs : {s.donneesObservees}</div>}
                 {s.actionsRealisees && <div style={{ fontSize: 11, color: 'var(--c-t2)' }}>Actions : {s.actionsRealisees}</div>}
                 {s.resultatsObtenus && <div style={{ fontSize: 11, color: 'var(--c-t2)' }}>Résultats : {s.resultatsObtenus}</div>}
+                <div style={{ display: 'flex', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
+                  {s.saisiParNom && <span style={{ fontSize: 10, color: 'var(--c-t3)' }}>Saisi par <strong>{s.saisiParNom}</strong></span>}
+                  {s.valide && s.valideParNom && <span style={{ fontSize: 10, color: '#059669' }}>Validé par <strong>{s.valideParNom}</strong>{s.dateValidation ? ` le ${new Date(s.dateValidation).toLocaleDateString('fr-FR')}` : ''}</span>}
+                </div>
               </SyntheseItem>
             ))
         }
@@ -374,7 +378,11 @@ function ModalSoins({ sejour, items, onClose, onChanged }: {
             {s.donneesObservees && <p style={{ margin: '2px 0', fontSize: 11, color: 'var(--c-t2)' }}>Obs : {s.donneesObservees}</p>}
             {s.actionsRealisees && <p style={{ margin: '2px 0', fontSize: 11, color: 'var(--c-t2)' }}>Actions : {s.actionsRealisees}</p>}
             {s.resultatsObtenus && <p style={{ margin: '2px 0', fontSize: 11, color: 'var(--c-t2)' }}>Résultats : {s.resultatsObtenus}</p>}
-            <p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--c-t3)' }}>{new Date(s.dateHeure).toLocaleDateString('fr-FR')}</p>
+            <div style={{ display: 'flex', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 10, color: 'var(--c-t3)' }}>{new Date(s.dateHeure).toLocaleDateString('fr-FR')}</span>
+              {s.saisiParNom && <span style={{ fontSize: 10, color: 'var(--c-t3)' }}>Saisi par <strong>{s.saisiParNom}</strong></span>}
+              {s.valide && s.valideParNom && <span style={{ fontSize: 10, color: '#059669' }}>Validé par <strong>{s.valideParNom}</strong>{s.dateValidation ? ` le ${new Date(s.dateValidation).toLocaleDateString('fr-FR')}` : ''}</span>}
+            </div>
           </div>
         ))
       }
