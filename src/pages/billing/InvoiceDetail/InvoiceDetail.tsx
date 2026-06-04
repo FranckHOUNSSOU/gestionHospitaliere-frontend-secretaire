@@ -118,18 +118,24 @@ export default function InvoiceDetail() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @media print {
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
           body * { visibility: hidden; }
           #facture-print, #facture-print * { visibility: visible; }
           #facture-print {
             position: absolute;
             top: 0; left: 0;
             width: 100%;
-            padding: 20px 24px !important;
+            padding: 0 !important;
+            margin: 0 !important;
             border: none !important;
             border-radius: 0 !important;
             box-shadow: none !important;
+            background: white !important;
           }
-          @page { margin: 0; }
+          @page {
+            size: A4 portrait;
+            margin: 12mm 15mm;
+          }
         }
       `}</style>
 
@@ -150,7 +156,7 @@ export default function InvoiceDetail() {
       </div>
 
       {/* ══════════ DOCUMENT ══════════ */}
-      <div id="facture-print" style={{ background: 'white', padding: '20px 28px', borderRadius: 8, border: '1px solid #e2e8f0', fontFamily: 'Arial, sans-serif' }}>
+      <div id="facture-print" style={{ background: 'white', padding: '16px 20px', borderRadius: 8, border: '1px solid #e2e8f0', fontFamily: 'Arial, sans-serif', maxWidth: '210mm', margin: '0 auto' }}>
 
         {/* ── EN-TÊTE OFFICIEL ── */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr 1fr', gap: 8, alignItems: 'center', paddingBottom: 12, borderBottom: '2px solid #1e3a5f', marginBottom: 10 }}>
