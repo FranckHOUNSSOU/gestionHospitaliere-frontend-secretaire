@@ -1,5 +1,6 @@
 import './PatientFile.css';
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { useNavigation } from '../../../context/NavigationContext';
 import {
@@ -294,6 +295,8 @@ function ModalSynthese({ dossier, sejour, diagList, onClose }: {
 export default function PatientFile() {
   const { id } = useParams<{ id: string }>();
   const { navigate } = useNavigation();
+  const location = useLocation();
+  const autoSynthese = (location.state as any)?.synthese === true;
 
   const [dossier,  setDossier]  = useState<DossierPatient | null>(null);
   const [sejour,   setSejour]   = useState<Sejour | null>(null);
@@ -301,7 +304,6 @@ export default function PatientFile() {
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState<string | null>(null);
 
-  // Quel modal est ouvert
   type ModalType = 'critiques' | 'allergies' | 'traitements' | 'contacts' | 'couvertures' | 'diagnostics' | 'synthese' | null;
   const [openModal, setOpenModal] = useState<ModalType>(null);
 
@@ -329,7 +331,10 @@ export default function PatientFile() {
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([loadDossier(), loadSejour()]).finally(() => setLoading(false));
+    Promise.all([loadDossier(), loadSejour()]).finally(() => {
+      setLoading(false);
+      if (autoSynthese) setOpenModal('synthese');
+    });
   }, [loadDossier, loadSejour]);
 
   if (loading) return (

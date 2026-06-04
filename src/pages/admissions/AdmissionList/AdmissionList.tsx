@@ -399,6 +399,7 @@ export default function AdmissionList() {
                   <th>Service / Salle</th>
                   <th>Médecin</th>
                   <th>Entrée</th>
+                  {statusFilter === 'discharged' && <th>Sortie le</th>}
                   <th>Motif</th>
                   <th>Statut</th>
                   <th>Actions</th>
@@ -447,6 +448,15 @@ export default function AdmissionList() {
                           {new Date(adm.admissionDate).toLocaleDateString('fr-FR')}
                         </span>
                       </td>
+                      {statusFilter === 'discharged' && (
+                        <td>
+                          <span className="adm-cell-mono" style={{ color: '#059669' }}>
+                            {adm.expectedDischargeDate
+                              ? new Date(adm.expectedDischargeDate).toLocaleDateString('fr-FR')
+                              : '—'}
+                          </span>
+                        </td>
+                      )}
                       <td>
                         <span className="adm-cell-mono adm-text-truncate" style={{ maxWidth: '140px', display: 'block' }}>
                           {adm.reason}
@@ -455,7 +465,7 @@ export default function AdmissionList() {
                       <td><Badge variant={variant}>{label}</Badge></td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, position: 'relative' }}>
-                          <button onClick={() => navigate('patient-file', adm.patientId)} title="Dossier patient"
+                          <button onClick={() => navigate('patient-file', adm.patientId, { synthese: true })} title="Voir la synthèse"
                             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--c-bdr)', background: 'var(--c-bg2)', color: 'var(--c-primary)', cursor: 'pointer' }}>
                             <FolderOpen size={13} />
                           </button>
