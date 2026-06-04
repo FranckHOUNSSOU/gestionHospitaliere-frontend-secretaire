@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 import { useNavigation } from '../../../context/NavigationContext';
 import {
   ArrowLeft, X, Plus, Trash2, Save, Loader2,
-  AlertTriangle, Pill, Phone, Building2, Stethoscope, HeartPulse, FileText,
+  AlertTriangle, Pill, Phone, Building2, Stethoscope, HeartPulse, FileText, Activity,
 } from 'lucide-react';
 import client from '../../../services/clients';
 
@@ -39,6 +39,7 @@ interface Traitement{ id: string; nomMedicament: string; classe?: string; posolo
 interface Contact   { id: string; nom: string; prenom: string; lienParente: string; telephone: string; estPersonneConfiance?: boolean; }
 interface Couverture{ id: string; typeCouverture: string; nomOrganisme: string; numeroAssure: string; statut: string; dateDebut: string; estActive: boolean; }
 interface Diagnostic{ id: string; codeCim10: string; libelle: string; type: string; statut: string; }
+interface SoinInfirmier { id: string; cible: string; donneesObservees?: string | null; actionsRealisees?: string | null; resultatsObtenus?: string | null; dateHeure: string; valide: boolean; }
 interface Sejour    { id: string; numeroSejour: string; dateAdmission: string; typeSejour?: string; }
 
 // ── Composant Modal générique ─────────────────────────────────────────────────
@@ -289,6 +290,107 @@ function ModalSynthese({ dossier, sejour, diagList, onClose }: {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// MODAL — Soins infirmiers
+// ══════════════════════════════════════════════════════════════════════════════
+
+function ModalSoins({ sejour, items, onClose, onChanged }: {
+  sejour: Sejour | null; items: SoinInfirmier[]; onClose: () => void; onChanged: () => void;
+}) {
+  const today = new Date().toISOString().slice(0, 16);
+  const [form, setForm] = useState({ cible: '', donneesObservees: '', actionsRealisees: '', resultatsObtenus: '' });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr]       = useState<string | null>(null);
+
+  async function add() {
+    if (!sejour) return;
+    if (!form.cible.trim()) { setErr('La cible est obligatoire.'); return; }
+    setSaving(true); setErr(null);
+    try {
+      await client.post(`/sejours/${sejour.id}/soins`, {
+        cible:             form.cible.trim(),
+        donneesObservees:  form.donneesObservees  || undefined,
+        actionsRealisees:  form.actionsRealisees  || undefined,
+        resultatsObtenus:  form.resultatsObtenus  || undefined,
+        dateHeure:         new Date(today).toISOString(),
+        typeAuteur:        'Infirmier',
+      });
+      setForm({ cible: '', donneesObservees: '', actionsRealisees: '', resultatsObtenus: '' });
+      onChanged();
+    } catch (e: any) { setErr(e?.message ?? 'Erreur.'); }
+    finally { setSaving(false); }
+  }
+
+  if (!sejour) return (
+    <Modal title="Soins infirmiers" onClose={onClose}>
+      <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--c-t3)' }}>
+        <Activity size={28} style={{ marginBottom: 8 }} />
+        <p style={{ margin: 0, fontSize: 13 }}>Aucun séjour actif pour ce patient.</p>
+      </div>
+    </Modal>
+  );
+
+  return (
+    <Modal title="Soins infirmiers" onClose={onClose}>
+      <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--c-t3)' }}>
+        Séjour : <strong>{sejour.numeroSejour}</strong> · Admis le {new Date(sejour.dateAdmission).toLocaleDateString('fr-FR')}
+      </p>
+
+      {/* Liste existante */}
+      {items.length === 0
+        ? <p style={{ fontSize: 12, color: 'var(--c-t3)', fontStyle: 'italic', marginBottom: 12 }}>Aucun soin enregistré pour ce séjour.</p>
+        : items.map(s => (
+          <div key={s.id} style={{ padding: '8px 12px', background: 'var(--c-surf2)', borderRadius: 8, marginBottom: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-t0)' }}>{s.cible}</span>
+              <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 99, background: s.valide ? '#dcfce7' : '#fef3c7', color: s.valide ? '#166534' : '#92400e', fontWeight: 600 }}>
+                {s.valide ? 'Validé' : 'En attente'}
+              </span>
+            </div>
+            {s.donneesObservees && <p style={{ margin: '2px 0', fontSize: 11, color: 'var(--c-t2)' }}>Obs : {s.donneesObservees}</p>}
+            {s.actionsRealisees && <p style={{ margin: '2px 0', fontSize: 11, color: 'var(--c-t2)' }}>Actions : {s.actionsRealisees}</p>}
+            {s.resultatsObtenus && <p style={{ margin: '2px 0', fontSize: 11, color: 'var(--c-t2)' }}>Résultats : {s.resultatsObtenus}</p>}
+            <p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--c-t3)' }}>{new Date(s.dateHeure).toLocaleDateString('fr-FR')}</p>
+          </div>
+        ))
+      }
+
+      <Divider />
+      <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 600, color: 'var(--c-t1)' }}>Enregistrer un soin</p>
+      {err && <div className="adm-alert adm-alert-error" style={{ marginBottom: 10 }}>{err}</div>}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="adm-form-field">
+          <label className="adm-label">Cible (problème traité) *</label>
+          <input className="adm-input" placeholder="Ex : Douleur, Anxiété, Plaie" value={form.cible}
+            onChange={e => setForm(f => ({ ...f, cible: e.target.value }))} />
+        </div>
+        <div className="adm-form-field">
+          <label className="adm-label">Données observées</label>
+          <input className="adm-input" placeholder="Ex : Patient se plaint de douleurs EVA 7" value={form.donneesObservees}
+            onChange={e => setForm(f => ({ ...f, donneesObservees: e.target.value }))} />
+        </div>
+        <div className="adm-form-field">
+          <label className="adm-label">Actions réalisées</label>
+          <input className="adm-input" placeholder="Ex : Administration antalgique, pansement" value={form.actionsRealisees}
+            onChange={e => setForm(f => ({ ...f, actionsRealisees: e.target.value }))} />
+        </div>
+        <div className="adm-form-field">
+          <label className="adm-label">Résultats obtenus</label>
+          <input className="adm-input" placeholder="Ex : Diminution douleur EVA 7→3" value={form.resultatsObtenus}
+            onChange={e => setForm(f => ({ ...f, resultatsObtenus: e.target.value }))} />
+        </div>
+      </div>
+
+      <button onClick={add} disabled={saving} className="adm-btn adm-btn-primary" style={{ marginTop: 12, height: 34, gap: 6 }}>
+        <Plus size={13} /> {saving ? 'Enregistrement…' : 'Enregistrer le soin'}
+      </button>
+    </Modal>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════════════════
 // COMPOSANT PRINCIPAL
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -301,10 +403,11 @@ export default function PatientFile() {
   const [dossier,  setDossier]  = useState<DossierPatient | null>(null);
   const [sejour,   setSejour]   = useState<Sejour | null>(null);
   const [diagList, setDiagList] = useState<Diagnostic[]>([]);
+  const [soinsList, setSoinsList] = useState<SoinInfirmier[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState<string | null>(null);
 
-  type ModalType = 'critiques' | 'allergies' | 'traitements' | 'contacts' | 'couvertures' | 'diagnostics' | 'synthese' | null;
+  type ModalType = 'critiques' | 'allergies' | 'traitements' | 'contacts' | 'couvertures' | 'diagnostics' | 'soins' | 'synthese' | null;
   const [openModal, setOpenModal] = useState<ModalType>(null);
 
   const loadDossier = useCallback(async () => {
@@ -323,8 +426,9 @@ export default function PatientFile() {
       const { data } = await client.get<Sejour>(`/sejours/patient/${id}/actif`);
       setSejour(data);
       if (data?.id) {
-        const { data: diags } = await client.get<{ diagnostics: Diagnostic[] }>(`/sejours/${data.id}`);
-        setDiagList(diags.diagnostics ?? []);
+        const { data: detail } = await client.get<{ diagnostics: Diagnostic[]; soinsInfirmiers: SoinInfirmier[] }>(`/sejours/${data.id}`);
+        setDiagList(detail.diagnostics ?? []);
+        setSoinsList(detail.soinsInfirmiers ?? []);
       }
     } catch { setSejour(null); }
   }, [id]);
@@ -455,6 +559,13 @@ export default function PatientFile() {
           preview={diagList.slice(0, 2).map(d => d.libelle).join(', ')}
           onClick={() => setOpenModal('diagnostics')}
         />
+
+        <SectionCard
+          icon={<Activity size={15} />} title="Soins infirmiers" color="#0891b2"
+          count={soinsList.length}
+          preview={soinsList.slice(0, 2).map(s => s.cible).join(', ')}
+          onClick={() => setOpenModal('soins')}
+        />
       </div>
 
       {/* ══ MODALS ══ */}
@@ -514,6 +625,16 @@ export default function PatientFile() {
         <ModalDiagnostics
           sejour={sejour}
           items={diagList}
+          onClose={() => setOpenModal(null)}
+          onChanged={loadSejour}
+        />
+      )}
+
+      {/* Soins infirmiers */}
+      {openModal === 'soins' && (
+        <ModalSoins
+          sejour={sejour}
+          items={soinsList}
           onClose={() => setOpenModal(null)}
           onChanged={loadSejour}
         />
@@ -908,7 +1029,6 @@ function ModalCouvertures({ patientId, items, onClose, onChanged }: {
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
 // MODAL — Diagnostics
 // ══════════════════════════════════════════════════════════════════════════════
 
