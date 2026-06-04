@@ -475,7 +475,7 @@ export default function AdmissionList() {
                               <LogOut size={13} />
                             </button>
                           )}
-                          <div style={{ position: 'relative' }}>
+                          {adm.status !== 'discharged' && <div style={{ position: 'relative' }}>
                             <button onClick={() => setMenuOuvert(menuOuvert === adm.id ? null : adm.id)} title="Plus d'actions"
                               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--c-bdr)', background: 'var(--c-bg2)', color: 'var(--c-t2)', cursor: 'pointer' }}>
                               <MoreVertical size={13} />
@@ -489,17 +489,15 @@ export default function AdmissionList() {
                                   onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
                                   <Edit2 size={12} /> Modifier
                                 </button>
-                                {adm.status !== 'discharged' && (
-                                  <button onClick={() => { setMenuOuvert(null); setSupprModal(adm); }}
-                                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#dc2626' }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = '#fee2e2')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
-                                    <Trash2 size={12} /> Supprimer
-                                  </button>
-                                )}
+                                <button onClick={() => { setMenuOuvert(null); setSupprModal(adm); }}
+                                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#dc2626' }}
+                                  onMouseEnter={e => (e.currentTarget.style.background = '#fee2e2')}
+                                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+                                  <Trash2 size={12} /> Supprimer
+                                </button>
                               </div>
                             )}
-                          </div>
+                          </div>}
                         </div>
                       </td>
                     </tr>
