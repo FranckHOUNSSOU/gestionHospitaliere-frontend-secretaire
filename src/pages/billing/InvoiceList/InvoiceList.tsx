@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Search, Eye, Loader2 } from 'lucide-react';
 import { useNavigation } from '../../../context/NavigationContext';
 import client from '../../../services/clients';
@@ -6,11 +6,12 @@ import client from '../../../services/clients';
 interface Facture {
   id: string;
   numeroFacture: string;
-  patientId: string;
+  patientId: string | null;
   patientNom: string;
   patientPrenom: string;
   montantTotal: number;
-  statut: 'Émise' | 'Payée' | 'Annulée';
+  statut: string;
+  snapshot?: { patient?: { id?: string } };
   createdAt: string;
 }
 
@@ -120,13 +121,13 @@ export default function InvoiceList() {
                   return (
                     <tr key={f.id}>
                       <td>
-                        <button onClick={() => navigate('billing-detail', f.patientId)} className="adm-link-btn"
+                        <button onClick={() => navigate('billing-detail', (f.patientId ?? f.snapshot?.patient?.id ?? '') as string)} className="adm-link-btn"
                           style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11.5 }}>
                           {f.numeroFacture}
                         </button>
                       </td>
                       <td>
-                        <button onClick={() => navigate('billing-detail', f.patientId)} className="adm-link-btn">
+                        <button onClick={() => navigate('billing-detail', (f.patientId ?? f.snapshot?.patient?.id ?? '') as string)} className="adm-link-btn">
                           {f.patientPrenom} {f.patientNom}
                         </button>
                       </td>
@@ -140,7 +141,7 @@ export default function InvoiceList() {
                         </span>
                       </td>
                       <td>
-                        <button onClick={() => navigate('billing-detail', f.patientId)} className="adm-act">
+                        <button onClick={() => navigate('billing-detail', (f.patientId ?? f.snapshot?.patient?.id ?? '') as string)} className="adm-act">
                           <Eye size={13} />
                         </button>
                       </td>
