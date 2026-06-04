@@ -39,7 +39,7 @@ interface Traitement{ id: string; nomMedicament: string; classe?: string; posolo
 interface Contact   { id: string; nom: string; prenom: string; lienParente: string; telephone: string; estPersonneConfiance?: boolean; }
 interface Couverture{ id: string; typeCouverture: string; nomOrganisme: string; numeroAssure: string; statut: string; dateDebut: string; estActive: boolean; }
 interface Diagnostic{ id: string; codeCim10: string; libelle: string; type: string; statut: string; }
-interface SoinInfirmier { id: string; cible: string; donneesObservees?: string | null; actionsRealisees?: string | null; resultatsObtenus?: string | null; dateHeure: string; valide: boolean; }
+interface SoinInfirmier { id: string; cible: string; donneesObservees?: string | null; actionsRealisees?: string | null; resultatsObtenus?: string | null; dateHeure: string; valide: boolean; saisiParNom?: string | null; valideParNom?: string | null; dateValidation?: string | null; }
 interface Sejour    { id: string; numeroSejour: string; dateAdmission: string; typeSejour?: string; }
 
 // ── Composant Modal générique ─────────────────────────────────────────────────
@@ -155,9 +155,9 @@ function SyntheseItem({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ModalSynthese({ dossier, sejour, diagList, onClose }: {
+function ModalSynthese({ dossier, sejour, diagList, soinsList, onClose }: {
   dossier: DossierPatient; sejour: Sejour | null;
-  diagList: Diagnostic[]; onClose: () => void;
+  diagList: Diagnostic[]; soinsList: SoinInfirmier[]; onClose: () => void;
 }) {
   const age = Math.floor((Date.now() - new Date(dossier.dateNaissance).getTime()) / (365.25 * 24 * 3600 * 1000));
 
@@ -282,6 +282,35 @@ function ModalSynthese({ dossier, sejour, diagList, onClose }: {
         }
       </SyntheseSection>
 
+      {/* Soins infirmiers */}
+      <SyntheseSection icon={<Activity size={13} />} title="Soins infirmiers" color="#0891b2" count={soinsList.length}>
+        {!sejour
+          ? <p style={{ fontSize: 11, color: 'var(--c-t3)', fontStyle: 'italic', margin: 0 }}>Aucun séjour actif.</p>
+          : soinsList.length === 0
+            ? <p style={{ fontSize: 11, color: 'var(--c-t3)', fontStyle: 'italic', margin: 0 }}>Aucun soin enregistré pour ce séjour.</p>
+            : soinsList.map(s => (
+              <SyntheseItem key={s.id}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <span style={{ fontWeight: 600 }}>{s.cible}</span>
+                  <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 99, background: s.valide ? '#dcfce7' : '#fef3c7', color: s.valide ? '#166534' : '#92400e', fontWeight: 600 }}>
+                    {s.valide ? 'Validé' : 'En attente'}
+                  </span>
+                  <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--c-t3)' }}>
+                    {new Date(s.dateHeure).toLocaleDateString('fr-FR')}
+                  </span>
+                </div>
+                {s.donneesObservees && <div style={{ fontSize: 11, color: 'var(--c-t2)' }}>Obs : {s.donneesObservees}</div>}
+                {s.actionsRealisees && <div style={{ fontSize: 11, color: 'var(--c-t2)' }}>Actions : {s.actionsRealisees}</div>}
+                {s.resultatsObtenus && <div style={{ fontSize: 11, color: 'var(--c-t2)' }}>Résultats : {s.resultatsObtenus}</div>}
+                <div style={{ display: 'flex', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
+                  {s.saisiParNom && <span style={{ fontSize: 10, color: 'var(--c-t3)' }}>Saisi par <strong>{s.saisiParNom}</strong></span>}
+                  {s.valide && s.valideParNom && <span style={{ fontSize: 10, color: '#059669' }}>Validé par <strong>{s.valideParNom}</strong>{s.dateValidation ? ` le ${new Date(s.dateValidation).toLocaleDateString('fr-FR')}` : ''}</span>}
+                </div>
+              </SyntheseItem>
+            ))
+        }
+      </SyntheseSection>
+
       <div style={{ borderTop: '1px solid var(--c-bdr)', paddingTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
         <button onClick={onClose} className="adm-btn adm-btn-primary" style={{ height: 34, fontSize: 12 }}>Fermer</button>
       </div>
@@ -349,7 +378,11 @@ function ModalSoins({ sejour, items, onClose, onChanged }: {
             {s.donneesObservees && <p style={{ margin: '2px 0', fontSize: 11, color: 'var(--c-t2)' }}>Obs : {s.donneesObservees}</p>}
             {s.actionsRealisees && <p style={{ margin: '2px 0', fontSize: 11, color: 'var(--c-t2)' }}>Actions : {s.actionsRealisees}</p>}
             {s.resultatsObtenus && <p style={{ margin: '2px 0', fontSize: 11, color: 'var(--c-t2)' }}>Résultats : {s.resultatsObtenus}</p>}
-            <p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--c-t3)' }}>{new Date(s.dateHeure).toLocaleDateString('fr-FR')}</p>
+            <div style={{ display: 'flex', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 10, color: 'var(--c-t3)' }}>{new Date(s.dateHeure).toLocaleDateString('fr-FR')}</span>
+              {s.saisiParNom && <span style={{ fontSize: 10, color: 'var(--c-t3)' }}>Saisi par <strong>{s.saisiParNom}</strong></span>}
+              {s.valide && s.valideParNom && <span style={{ fontSize: 10, color: '#059669' }}>Validé par <strong>{s.valideParNom}</strong>{s.dateValidation ? ` le ${new Date(s.dateValidation).toLocaleDateString('fr-FR')}` : ''}</span>}
+            </div>
           </div>
         ))
       }
@@ -646,6 +679,7 @@ export default function PatientFile() {
           dossier={dossier}
           sejour={sejour}
           diagList={diagList}
+          soinsList={soinsList}
           onClose={() => setOpenModal(null)}
         />
       )}
