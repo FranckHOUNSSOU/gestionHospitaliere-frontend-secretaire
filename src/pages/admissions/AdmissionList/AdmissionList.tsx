@@ -48,8 +48,10 @@ function toRow(p: Patient): Admission {
     department:            dernierMvt?.serviceArrivee ?? dernier?.modeEntree ?? '—',
     room:                  dernierMvt?.numeroChambre  ?? '—',
     bed:                   dernierMvt?.numeroLit      ?? '—',
-    doctorId:              '',
-    doctorName:            '—',
+    doctorId:              dernier?.medecinResponsable?.user ? '' : '',
+    doctorName:            dernier?.medecinResponsable?.user
+      ? `Dr. ${dernier.medecinResponsable.user.prenom} ${dernier.medecinResponsable.user.nom}`
+      : '—',
     reason:                dernier?.motifHospitalisation ?? dernier?.modeEntree ?? '—',
     status:                deriveStatus(sejours),
   };
@@ -397,7 +399,6 @@ export default function AdmissionList() {
                   <th>Service / Salle</th>
                   <th>Médecin</th>
                   <th>Entrée</th>
-                  <th>Sortie prévue</th>
                   <th>Motif</th>
                   <th>Statut</th>
                   <th>Actions</th>
@@ -444,13 +445,6 @@ export default function AdmissionList() {
                       <td>
                         <span className="adm-cell-mono">
                           {new Date(adm.admissionDate).toLocaleDateString('fr-FR')}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="adm-cell-mono">
-                          {adm.expectedDischargeDate
-                            ? new Date(adm.expectedDischargeDate).toLocaleDateString('fr-FR')
-                            : '—'}
                         </span>
                       </td>
                       <td>
