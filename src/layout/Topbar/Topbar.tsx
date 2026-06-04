@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import client from '../../services/clients';
 
 export const Topbar = ({ minimized, onToggleSidebar }: {
   minimized: boolean;
@@ -7,6 +9,20 @@ export const Topbar = ({ minimized, onToggleSidebar }: {
 }) => {
   const { dark, toggle } = useTheme();
   const { user, logout } = useAuth();
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    client.get<{ photoUrl?: string | null }>('/auth/profil')
+      .then(res => setPhotoUrl(res.data.photoUrl ?? null))
+      .catch(() => setPhotoUrl(null));
+  }, [user]);
+
+  useEffect(() => {
+    const handler = (e: Event) => setPhotoUrl((e as CustomEvent).detail.url);
+    window.addEventListener('userPhotoUpdated', handler);
+    return () => window.removeEventListener('userPhotoUpdated', handler);
+  }, []);
 
   const initiales = user
     ? `${user.nom?.[0] ?? ''}${user.prenom?.[0] ?? ''}`.toUpperCase()
@@ -67,7 +83,12 @@ export const Topbar = ({ minimized, onToggleSidebar }: {
         </button>
 
         <div className="adm-user-btn">
-          <div className="adm-avatar">{initiales}</div>
+          <div className="adm-avatar" style={photoUrl ? { background: 'none', padding: 0, overflow: 'hidden' } : undefined}>
+            {photoUrl
+              ? <img src={photoUrl} alt={initiales} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : initiales
+            }
+          </div>
           <div>
             <div className="adm-user-name">{nomComplet}</div>
             <div className="adm-user-role">Agent Administratif</div>
