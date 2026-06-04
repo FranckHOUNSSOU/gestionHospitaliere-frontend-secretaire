@@ -155,9 +155,9 @@ function SyntheseItem({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ModalSynthese({ dossier, sejour, diagList, onClose }: {
+function ModalSynthese({ dossier, sejour, diagList, soinsList, onClose }: {
   dossier: DossierPatient; sejour: Sejour | null;
-  diagList: Diagnostic[]; onClose: () => void;
+  diagList: Diagnostic[]; soinsList: SoinInfirmier[]; onClose: () => void;
 }) {
   const age = Math.floor((Date.now() - new Date(dossier.dateNaissance).getTime()) / (365.25 * 24 * 3600 * 1000));
 
@@ -277,6 +277,31 @@ function ModalSynthese({ dossier, sejour, diagList, onClose }: {
                 <span style={{ fontWeight: 600 }}>{d.libelle}</span>
                 {' · '}<span style={{ color: 'var(--c-t3)' }}>{d.type}</span>
                 {' · '}<span style={{ color: 'var(--c-t3)' }}>{d.statut}</span>
+              </SyntheseItem>
+            ))
+        }
+      </SyntheseSection>
+
+      {/* Soins infirmiers */}
+      <SyntheseSection icon={<Activity size={13} />} title="Soins infirmiers" color="#0891b2" count={soinsList.length}>
+        {!sejour
+          ? <p style={{ fontSize: 11, color: 'var(--c-t3)', fontStyle: 'italic', margin: 0 }}>Aucun séjour actif.</p>
+          : soinsList.length === 0
+            ? <p style={{ fontSize: 11, color: 'var(--c-t3)', fontStyle: 'italic', margin: 0 }}>Aucun soin enregistré pour ce séjour.</p>
+            : soinsList.map(s => (
+              <SyntheseItem key={s.id}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <span style={{ fontWeight: 600 }}>{s.cible}</span>
+                  <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 99, background: s.valide ? '#dcfce7' : '#fef3c7', color: s.valide ? '#166534' : '#92400e', fontWeight: 600 }}>
+                    {s.valide ? 'Validé' : 'En attente'}
+                  </span>
+                  <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--c-t3)' }}>
+                    {new Date(s.dateHeure).toLocaleDateString('fr-FR')}
+                  </span>
+                </div>
+                {s.donneesObservees && <div style={{ fontSize: 11, color: 'var(--c-t2)' }}>Obs : {s.donneesObservees}</div>}
+                {s.actionsRealisees && <div style={{ fontSize: 11, color: 'var(--c-t2)' }}>Actions : {s.actionsRealisees}</div>}
+                {s.resultatsObtenus && <div style={{ fontSize: 11, color: 'var(--c-t2)' }}>Résultats : {s.resultatsObtenus}</div>}
               </SyntheseItem>
             ))
         }
@@ -646,6 +671,7 @@ export default function PatientFile() {
           dossier={dossier}
           sejour={sejour}
           diagList={diagList}
+          soinsList={soinsList}
           onClose={() => setOpenModal(null)}
         />
       )}

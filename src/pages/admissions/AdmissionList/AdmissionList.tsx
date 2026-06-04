@@ -465,7 +465,7 @@ export default function AdmissionList() {
                       <td><Badge variant={variant}>{label}</Badge></td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, position: 'relative' }}>
-                          <button onClick={() => navigate('patient-file', adm.patientId, { synthese: true })} title="Voir la synthèse"
+                          <button onClick={() => navigate('patient-file', adm.patientId, adm.status === 'discharged' ? { synthese: true } : undefined)} title={adm.status === 'discharged' ? 'Voir la synthèse' : 'Voir le dossier'}
                             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--c-bdr)', background: 'var(--c-bg2)', color: 'var(--c-primary)', cursor: 'pointer' }}>
                             <FolderOpen size={13} />
                           </button>
