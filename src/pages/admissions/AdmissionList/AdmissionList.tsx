@@ -54,6 +54,7 @@ function toRow(p: Patient): Admission {
       : '—',
     reason:                dernier?.motifHospitalisation ?? dernier?.modeEntree ?? '—',
     status:                deriveStatus(sejours),
+    typeSejour:            (dernier as any)?.typeSejour ?? undefined,
   };
 }
 
@@ -398,6 +399,7 @@ export default function AdmissionList() {
                   <th>Patient</th>
                   <th>Service / Salle</th>
                   <th>Médecin</th>
+                  <th>Type</th>
                   <th>Entrée</th>
                   {statusFilter === 'discharged' && <th>Sortie le</th>}
                   <th>Motif</th>
@@ -408,7 +410,7 @@ export default function AdmissionList() {
               <tbody>
                 {visibleRows.length === 0 ? (
                   <tr>
-                    <td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: 'var(--c-t3)' }}>
+                    <td colSpan={9} style={{ textAlign: 'center', padding: '32px', color: 'var(--c-t3)' }}>
                       {searched ? 'Aucun résultat pour cette recherche.' : 'Aucun patient actif hospiitalisé ou transféré.'}
                     </td>
                   </tr>
@@ -442,6 +444,17 @@ export default function AdmissionList() {
                         <span className="adm-cell-mono" style={{ fontSize: '12px', color: 'var(--c-t1)' }}>
                           {adm.doctorName}
                         </span>
+                      </td>
+                      <td>
+                        {adm.typeSejour ? (
+                          <span style={{
+                            fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
+                            background: adm.typeSejour === 'Hospitalisation' ? '#eff6ff' : adm.typeSejour === 'Consultation' ? '#f0fdf4' : '#fef2f2',
+                            color:      adm.typeSejour === 'Hospitalisation' ? '#1d4ed8' : adm.typeSejour === 'Consultation' ? '#166534' : '#dc2626',
+                          }}>
+                            {adm.typeSejour === 'Hospitalisation' ? '🏥' : adm.typeSejour === 'Consultation' ? '🩺' : '🚨'} {adm.typeSejour}
+                          </span>
+                        ) : <span style={{ color: 'var(--c-t3)', fontSize: 12 }}>—</span>}
                       </td>
                       <td>
                         <span className="adm-cell-mono">

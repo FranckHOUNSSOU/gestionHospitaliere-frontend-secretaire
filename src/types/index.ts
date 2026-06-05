@@ -54,6 +54,7 @@ export interface Admission {
   reason: string;
   diagnosis?: string;
   status: AdmissionStatus;
+  typeSejour?: 'Hospitalisation' | 'Consultation' | 'Urgences';
   notes?: string;
 }
 
