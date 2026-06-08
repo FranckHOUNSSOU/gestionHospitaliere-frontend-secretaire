@@ -77,12 +77,12 @@ export const Sidebar = ({ minimized }: { minimized: boolean }) => (
       </svg>
     } label="Nouvelle facture" />
 
-    <div className="adm-nav-sec">Rapports</div>
-    <Item to="/reports" minimized={minimized} fontSize={13} icon={
+    <div className="adm-nav-sec">Notifications</div>
+    <Item to="/notifications" minimized={minimized} fontSize={13} icon={
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
-        <line x1="6" y1="20" x2="6" y2="14"/>
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
       </svg>
-    } label="Statistiques" />
+    } label="Notifications" />
   </div>
 );

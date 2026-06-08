@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { countNonLu } from '../../services/notificationService';
 
 export const Topbar = ({ minimized, onToggleSidebar }: {
   minimized: boolean;
@@ -7,6 +10,16 @@ export const Topbar = ({ minimized, onToggleSidebar }: {
 }) => {
   const { dark, toggle } = useTheme();
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [nonLu, setNonLu] = useState(0);
+
+  useEffect(() => {
+    countNonLu().then(r => setNonLu(r.data.count)).catch(() => {});
+    const interval = setInterval(() => {
+      countNonLu().then(r => setNonLu(r.data.count)).catch(() => {});
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const initiales = user
     ? `${user.nom?.[0] ?? ''}${user.prenom?.[0] ?? ''}`.toUpperCase()
@@ -43,12 +56,23 @@ export const Topbar = ({ minimized, onToggleSidebar }: {
           Système opérationnel
         </div>
 
-        <button className="adm-icon-btn" title="Notifications">
+        <button className="adm-icon-btn" title="Notifications" onClick={() => navigate('/notifications')} style={{ position: 'relative' }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
           </svg>
-          <div className="adm-notif-badge" />
+          {nonLu > 0 && (
+            <span style={{
+              position: 'absolute', top: 2, right: 2,
+              minWidth: 16, height: 16, borderRadius: 99,
+              background: '#ef4444', color: '#fff',
+              fontSize: 9, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '0 3px',
+            }}>
+              {nonLu > 99 ? '99+' : nonLu}
+            </span>
+          )}
         </button>
 
         <button className="adm-icon-btn" onClick={toggle} title={dark ? 'Mode clair' : 'Mode sombre'}>
