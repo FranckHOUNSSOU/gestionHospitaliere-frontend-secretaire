@@ -538,6 +538,15 @@ export default function PatientFile() {
                   {dossier.groupeSanguinAbo} {dossier.groupeSanguinRhesus === 'Positif' ? '+' : dossier.groupeSanguinRhesus === 'Négatif' ? '−' : ''}
                 </span>
               )}
+              {sejour && sejour.typeSejour && (
+                <span style={{
+                  fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
+                  background: sejour.typeSejour === 'Hospitalisation' ? '#eff6ff' : sejour.typeSejour === 'Consultation' ? '#f0fdf4' : '#fef2f2',
+                  color:      sejour.typeSejour === 'Hospitalisation' ? '#1d4ed8' : sejour.typeSejour === 'Consultation' ? '#166534' : '#dc2626',
+                }}>
+                  {sejour.typeSejour}
+                </span>
+              )}
               {sejour && (
                 <span style={{ fontSize: 11, background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '3px 10px' }}>
                   Séjour actif · {new Date(sejour.dateAdmission).toLocaleDateString('fr-FR')}

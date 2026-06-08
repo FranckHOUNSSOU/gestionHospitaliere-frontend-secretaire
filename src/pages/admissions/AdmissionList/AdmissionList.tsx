@@ -452,7 +452,7 @@ export default function AdmissionList() {
                             background: adm.typeSejour === 'Hospitalisation' ? '#eff6ff' : adm.typeSejour === 'Consultation' ? '#f0fdf4' : '#fef2f2',
                             color:      adm.typeSejour === 'Hospitalisation' ? '#1d4ed8' : adm.typeSejour === 'Consultation' ? '#166534' : '#dc2626',
                           }}>
-                            {adm.typeSejour === 'Hospitalisation' ? '🏥' : adm.typeSejour === 'Consultation' ? '🩺' : '🚨'} {adm.typeSejour}
+                            {adm.typeSejour}
                           </span>
                         ) : <span style={{ color: 'var(--c-t3)', fontSize: 12 }}>—</span>}
                       </td>
