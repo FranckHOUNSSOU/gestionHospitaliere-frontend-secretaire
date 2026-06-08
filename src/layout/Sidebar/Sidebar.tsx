@@ -30,12 +30,10 @@ export const Sidebar = ({ minimized }: { minimized: boolean }) => (
     <Item to="/admissions/new" minimized={minimized} fontSize={13} icon={
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
         <rect x="3" y="4" width="18" height="18" rx="2"/>
-        <line x1="8" y1="2" x2="8" y2="6"/>
-        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/>
         <line x1="3" y1="10" x2="21" y2="10"/>
         <circle cx="12" cy="16" r="3"/>
-        <line x1="12" y1="14.5" x2="12" y2="17.5"/>
-        <line x1="10.5" y1="16" x2="13.5" y2="16"/>
+        <line x1="12" y1="14.5" x2="12" y2="17.5"/><line x1="10.5" y1="16" x2="13.5" y2="16"/>
       </svg>
     } label="Nouvelle admission" />
     
@@ -84,5 +82,13 @@ export const Sidebar = ({ minimized }: { minimized: boolean }) => (
         <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
       </svg>
     } label="Notifications" />
+
+    <div className="adm-nav-sec">Paramètres</div>
+    <Item to="/profil" minimized={minimized} fontSize={13} icon={
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+    } label="Mon profil" />
   </div>
 );

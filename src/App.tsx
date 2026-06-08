@@ -20,6 +20,7 @@ import InvoiceDetail from './pages/billing/InvoiceDetail/InvoiceDetail';
 import InvoiceForm from './pages/billing/InvoiceForm/InvoiceForm';
 import Reports from './pages/reports/Reports/Reports';
 import NotificationsPage from './pages/notifications/NotificationsPage';
+import ProfilPage from './pages/ProfilPage/ProfilPage';
 
 function App() {
   return (
@@ -63,6 +64,7 @@ function App() {
 
                 <Route path="reports" element={<Reports />} />
                 <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="profil" element={<ProfilPage />} />
               </Route>
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
