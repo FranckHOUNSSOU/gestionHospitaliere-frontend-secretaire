@@ -419,7 +419,13 @@ export default function AdmissionList() {
                   const days = adm.status === 'active'
                     ? Math.floor((Date.now() - new Date(adm.admissionDate).getTime()) / 86_400_000)
                     : null;
-                  const rowBg = idx % 2 !== 0 ? 'rgba(99,102,241,0.04)' : 'transparent';
+                  const heures = (Date.now() - new Date(adm.admissionDate).getTime()) / 3_600_000;
+                  const consultationOubliee = adm.status === 'active'
+                    && adm.typeSejour === 'Consultation'
+                    && heures > 12;
+                  const rowBg = consultationOubliee
+                    ? 'rgba(251,191,36,0.08)'
+                    : idx % 2 !== 0 ? 'rgba(99,102,241,0.04)' : 'transparent';
 
                   return (
                     <tr key={adm.id} style={{ background: rowBg }}>
@@ -475,7 +481,16 @@ export default function AdmissionList() {
                           {adm.reason}
                         </span>
                       </td>
-                      <td><Badge variant={variant}>{label}</Badge></td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                          <Badge variant={variant}>{label}</Badge>
+                          {consultationOubliee && (
+                            <span style={{ fontSize: 10, fontWeight: 700, color: '#92400e', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 4, padding: '1px 6px', whiteSpace: 'nowrap' }}>
+                              ⚠ Sortie non enregistrée
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, position: 'relative' }}>
                           <button onClick={() => navigate('patient-file', adm.patientId, adm.status === 'discharged' ? { synthese: true } : undefined)} title={adm.status === 'discharged' ? 'Voir la synthèse' : 'Voir le dossier'}
