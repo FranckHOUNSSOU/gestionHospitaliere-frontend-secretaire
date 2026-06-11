@@ -26,6 +26,7 @@ function toAdmission(p: Patient): Admission | null {
     doctorName:    '—',
     reason:        dernier.motifHospitalisation ?? dernier.modeEntree ?? '—',
     status:        dernier.dateSortie ? 'discharged' : 'active',
+    typeSejour:    (dernier as any).typeSejour ?? undefined,
   };
 }
 
@@ -58,6 +59,12 @@ export default function DashboardAgent() {
   const pendingInvoices  = invoices.filter((i) => i.status === 'pending' || i.status === 'overdue');
   const totalRevenue     = invoices.reduce((s, i) => s + i.paid, 0);
 
+  const consultationsOubliees = allAdmissions.filter((a) =>
+    a.status === 'active' &&
+    a.typeSejour === 'Consultation' &&
+    (Date.now() - new Date(a.admissionDate).getTime()) > 12 * 3_600_000,
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* KPI Cards */}
@@ -73,6 +80,47 @@ export default function DashboardAgent() {
           subtitle={`${pendingInvoices.length} factures en attente`}
           icon={<Receipt size={18} />} color="emerald" trend={{ value: '12% vs mois dernier', up: true }} />
       </div>
+
+      {/* Consultations à vérifier */}
+      {consultationsOubliees.length > 0 && (
+        <div className="adm-card" style={{ borderLeft: '3px solid #f59e0b' }}>
+          <div className="adm-card-head">
+            <div>
+              <p className="adm-card-title" style={{ color: '#92400e' }}>
+                ⚠ Consultations — sortie non enregistrée
+              </p>
+              <p className="adm-card-sub">
+                {consultationsOubliees.length} consultation{consultationsOubliees.length > 1 ? 's' : ''} ouverte{consultationsOubliees.length > 1 ? 's' : ''} depuis plus de 12h
+              </p>
+            </div>
+          </div>
+          <div style={{ padding: '0 0 8px' }}>
+            {consultationsOubliees.map((adm) => {
+              const heures = Math.floor((Date.now() - new Date(adm.admissionDate).getTime()) / 3_600_000);
+              return (
+                <div key={adm.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: '1px solid var(--c-bdr)' }}>
+                  <div className="adm-avatar-sm" style={{ background: '#f59e0b', flexShrink: 0 }}>
+                    {adm.patientName.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--c-t0)' }}>{adm.patientName}</p>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--c-t3)' }}>
+                      Admis le {new Date(adm.admissionDate).toLocaleDateString('fr-FR')} — <strong style={{ color: '#92400e' }}>{heures}h sans sortie</strong>
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => navigate('admissions')}
+                    className="adm-btn"
+                    style={{ fontSize: 11, height: 28, borderColor: '#f59e0b', color: '#92400e' }}
+                  >
+                    Enregistrer la sortie <ArrowRight size={11} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Rendez-vous du jour */}
       <div className="adm-card">

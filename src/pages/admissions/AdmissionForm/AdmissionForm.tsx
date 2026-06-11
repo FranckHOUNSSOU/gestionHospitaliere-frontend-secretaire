@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Save, BedDouble, User, Stethoscope, Search, X, Loader2 } from 'lucide-react';
 import { useNavigation } from '../../../context/NavigationContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -18,16 +18,22 @@ interface Service {
   nom: string;
   code: string;
 }
+interface Chambre {
+  id: string;
+  numero: string;
+  designation: string | null;
+  etage: string | null;
+  capacite: number;
+}
+
+const TYPES_SEJOUR = [
+  { value: 'Hospitalisation', label: 'Hospitalisation', desc: 'Admission avec lit/chambre assigné' },
+  { value: 'Consultation',    label: 'Consultation',    desc: 'Visite médicale, retour le même jour' },
+  { value: 'Urgences',        label: 'Urgences',        desc: 'Prise en charge immédiate' },
+] as const;
 
 // Valeurs de l'enum ModeEntree côté backend
-const MODES_ENTREE = [
-  'Urgences',
-  'Consultation externe',
-  'Transfert interne',
-  'Transfert externe',
-  'Programmé',
-  'Maternité',
-] as const;
+const MODES_ENTREE = ['Urgences', 'Programmé', 'Transfert', 'Naissance', 'Autre'] as const;
 
 // Auto-génère un numéro de séjour unique
 function genNumeroSejour(): string {
@@ -53,12 +59,14 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
 
   // ── État du formulaire ────────────────────────────────────────────────────
   const [form, setForm] = useState({
+    typeSejour:            'Hospitalisation' as string,
     medecinResponsableId:  '',
     modeEntree:            '',
     motifHospitalisation:  '',
-    codeCIM10:             '',
-    dateAdmission:         new Date().toISOString().slice(0, 16), // datetime-local
+    dateAdmission:         new Date().toISOString().slice(0, 16),
     numeroSejour:          genNumeroSejour(),
+    numeroChambre:         '',
+    numeroLit:             '',
   });
 
   // Patient sélectionné
@@ -109,6 +117,10 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
   const [medecinsLoading, setMedecinsLoading] = useState(false);
   const [medecinsErr,     setMedecinsErr]     = useState<string | null>(null);
 
+  // ── Chambres du service ──────────────────────────────────────────────────
+  const [chambres,        setChambres]        = useState<Chambre[]>([]);
+  const [chambresLoading, setChambresLoading] = useState(false);
+
     // ── Chargement des services du pôle ──────────────────────────────────────────
     useEffect(() => {
       if (!poleId) return;
@@ -139,6 +151,17 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
     .finally(() => setMedecinsLoading(false));
 }, [selectedService]);
 
+  useEffect(() => {
+    const needsRoom = form.typeSejour === 'Hospitalisation' || form.typeSejour === 'Urgences';
+    if (!selectedService || !needsRoom) { setChambres([]); return; }
+    setChambresLoading(true);
+    client
+      .get<Chambre[]>(`/chambres/service/${selectedService}`)
+      .then(res => setChambres(res.data.filter(c => (c as any).estActive !== false)))
+      .catch(() => setChambres([]))
+      .finally(() => setChambresLoading(false));
+  }, [selectedService, form.typeSejour]);
+
   // ── Sauvegarde ────────────────────────────────────────────────────────────
   const [saving,   setSaving]   = useState(false);
   const [saveErr,  setSaveErr]  = useState<string | null>(null);
@@ -157,14 +180,27 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
     setSaving(true);
     setSaveErr(null);
     try {
-      await client.post(`/sejours/patient/${selectedPatient.id}`, {
+      const { data: sejour } = await client.post<{ id: string }>(`/sejours/patient/${selectedPatient.id}`, {
         numeroSejour:         form.numeroSejour,
+        typeSejour:           form.typeSejour,
         medecinResponsableId: form.medecinResponsableId || undefined,
         modeEntree:           form.modeEntree,
         motifHospitalisation: form.motifHospitalisation.trim(),
         codeCIM10:            form.codeCIM10 || undefined,
         dateAdmission:        new Date(form.dateAdmission).toISOString(),
       });
+
+      // Pour une hospitalisation, enregistrer l'affectation lit/chambre
+      if (form.typeSejour === 'Hospitalisation' || form.typeSejour === 'Urgences') {
+        const serviceNom = services.find(s => s.id === selectedService)?.nom ?? '';
+        await client.post(`/sejours/${sejour.id}/mouvements`, {
+          dateHeureMouvement: new Date(form.dateAdmission).toISOString(),
+          serviceArrivee:     serviceNom,
+          numeroChambre:      form.numeroChambre || undefined,
+          numeroLit:          form.numeroLit     || undefined,
+        });
+      }
+
       setSaved(true);
       setTimeout(() => navigate('admissions'), 1200);
     } catch (err: unknown) {
@@ -339,6 +375,34 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
             </div>
           </div>
 
+          {/* ── Section Type de séjour ── */}
+          <div className="adm-form-section">
+            <div className="adm-form-section-head">
+              <div className="adm-form-section-icon adm-fsi-blue"><Stethoscope size={13} /></div>
+              <p className="adm-card-title">Type de prise en charge</p>
+            </div>
+            <div className="adm-form-section-body">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                {TYPES_SEJOUR.map(t => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, typeSejour: t.value }))}
+                    style={{
+                      padding: '10px 12px', borderRadius: 8, cursor: 'pointer', textAlign: 'left',
+                      border: form.typeSejour === t.value ? '2px solid var(--c-primary)' : '1px solid var(--c-bdr)',
+                      background: form.typeSejour === t.value ? 'var(--c-accent-bg)' : 'var(--c-surf2)',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: form.typeSejour === t.value ? 'var(--c-primary)' : 'var(--c-t1)' }}>{t.label}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--c-t3)' }}>{t.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* ── Section Médecin + Infos médicales ── */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
@@ -386,7 +450,9 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
 
                 {/* Motif */}
                 <div className="adm-form-field" style={{ gridColumn: '1 / -1' }}>
-                  <label className="adm-label">Motif d'hospitalisation *</label>
+                  <label className="adm-label">
+                    {form.typeSejour === 'Consultation' ? 'Motif de consultation' : form.typeSejour === 'Urgences' ? 'Motif de venue aux urgences' : 'Motif d\'hospitalisation'} *
+                  </label>
                   <input
                     type="text"
                     value={form.motifHospitalisation}
@@ -433,6 +499,51 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                   />
                 </div>
 
+                {/* Chambre / Lit — Hospitalisation et Urgences */}
+                {(form.typeSejour === 'Hospitalisation' || form.typeSejour === 'Urgences') && (<>
+                  <div className="adm-form-field">
+                    <label className="adm-label">
+                      Chambre
+                      {!selectedService && <span style={{ color: '#f97316', fontSize: 10, marginLeft: 6 }}>— sélectionnez d'abord un service</span>}
+                    </label>
+                    {chambresLoading ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', fontSize: 12, color: 'var(--c-t3)' }}>
+                        <Loader2 size={13} style={{ animation: 'spin 0.7s linear infinite' }} /> Chargement…
+                      </div>
+                    ) : (
+                      <select
+                        className="adm-input"
+                        value={form.numeroChambre}
+                        disabled={!selectedService}
+                        onChange={e => setForm(f => ({ ...f, numeroChambre: e.target.value, numeroLit: '' }))}
+                      >
+                        <option value="">
+                          {!selectedService
+                            ? '— Sélectionnez un service —'
+                            : chambres.length === 0
+                              ? '— Aucune chambre disponible —'
+                              : '— Choisir une chambre —'}
+                        </option>
+                        {chambres.map(c => (
+                          <option key={c.id} value={c.numero}>
+                            {c.numero}{c.designation ? ` — ${c.designation}` : ''}{c.etage ? ` (${c.etage})` : ''} · {c.capacite} lit{c.capacite > 1 ? 's' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                  <div className="adm-form-field">
+                    <label className="adm-label">N° de lit</label>
+                    <input
+                      className="adm-input"
+                      placeholder="Ex : 1, 2, 3…"
+                      value={form.numeroLit}
+                      disabled={!form.numeroChambre}
+                      onChange={e => setForm(f => ({ ...f, numeroLit: e.target.value }))}
+                    />
+                  </div>
+                </>)}
+
               </div>
             </div>
           </div>
@@ -470,12 +581,17 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
               {[
                 { label: 'Patient', value: selectedPatient ? `${selectedPatient.prenom} ${selectedPatient.nom}` : '—' },
                 { label: 'IPP',     value: selectedPatient?.numeroIpp ?? '—' },
+                { label: 'Type',    value: form.typeSejour || '—' },
                 { label: 'Pôle',    value: poleNom ?? '—' },
-                { label: 'Service',  value: services.find(s => s.id === selectedService)?.nom ?? '—' },
+                { label: 'Service', value: services.find(s => s.id === selectedService)?.nom ?? '—' },
                 { label: 'Médecin', value: selectedMedecin ? `Dr. ${selectedMedecin.prenom} ${selectedMedecin.nom}` : '—' },
                 { label: 'Mode',    value: form.modeEntree || '—' },
                 { label: 'CIM-10',  value: form.codeCIM10 ? form.codeCIM10.split(' — ')[0] : '—' },
                 { label: 'Entrée',  value: form.dateAdmission ? new Date(form.dateAdmission).toLocaleDateString('fr-FR') : '—' },
+                ...(form.typeSejour === 'Hospitalisation' || form.typeSejour === 'Urgences' ? [
+                  { label: 'Chambre', value: form.numeroChambre || '—' },
+                  { label: 'Lit',     value: form.numeroLit     || '—' },
+                ] : []),
               ].map(({ label, value }) => (
                 <div key={label} className="adm-summary-row">
                   <span className="adm-summary-k">{label}</span>

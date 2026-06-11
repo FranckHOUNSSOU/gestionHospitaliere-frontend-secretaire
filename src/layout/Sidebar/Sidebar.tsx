@@ -26,14 +26,6 @@ export const Sidebar = ({ minimized }: { minimized: boolean }) => (
       </svg>
     } label="Vue d'ensemble" />
 
-    <div className="adm-nav-sec">Patients</div>
-    <Item to="/admissions" minimized={minimized} fontSize={13} icon={
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-      </svg>
-    } label="Liste des Patients" />
-
     <div className="adm-nav-sec">Admissions</div>
     <Item to="/admissions/new" minimized={minimized} fontSize={13} icon={
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -44,6 +36,14 @@ export const Sidebar = ({ minimized }: { minimized: boolean }) => (
         <line x1="12" y1="14.5" x2="12" y2="17.5"/><line x1="10.5" y1="16" x2="13.5" y2="16"/>
       </svg>
     } label="Nouvelle admission" />
+    
+     <div className="adm-nav-sec">Patients</div>
+    <Item to="/admissions" minimized={minimized} fontSize={13} icon={
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+    } label="Liste des Patients" />
 
     <div className="adm-nav-sec">Rendez-vous</div>
     <Item to="/appointments" minimized={minimized} fontSize={13} icon={
@@ -75,13 +75,13 @@ export const Sidebar = ({ minimized }: { minimized: boolean }) => (
       </svg>
     } label="Nouvelle facture" />
 
-    <div className="adm-nav-sec">Rapports</div>
-    <Item to="/reports" minimized={minimized} fontSize={13} icon={
+    <div className="adm-nav-sec">Notifications</div>
+    <Item to="/notifications" minimized={minimized} fontSize={13} icon={
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
-        <line x1="6" y1="20" x2="6" y2="14"/>
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
       </svg>
-    } label="Statistiques" />
+    } label="Notifications" />
 
     <div className="adm-nav-sec">Paramètres</div>
     <Item to="/profil" minimized={minimized} fontSize={13} icon={

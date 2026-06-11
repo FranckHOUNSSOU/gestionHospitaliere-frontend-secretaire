@@ -14,6 +14,7 @@ export interface Sejour {
   modeEntree:           string | null;
   motifHospitalisation: string | null;
   mouvements:           Mouvement[];
+  medecinResponsable?:  { user?: { nom: string; prenom: string } } | null;
 }
 
 export interface Patient {

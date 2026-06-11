@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Plus, Search, BedDouble, CheckCircle2, ArrowRight, FolderOpen, LogOut, Loader2 } from 'lucide-react';
+﻿import { useState, useEffect, useRef } from 'react';
+import { Plus, Search, BedDouble, CheckCircle2, ArrowRight, FolderOpen, LogOut, Loader2, X, Save } from 'lucide-react';
 import Badge, { statusBadge } from '../../../components/ui/Badge/Badge';
 import { useNavigation } from '../../../context/NavigationContext';
 import type { Admission, AdmissionStatus } from '../../../types/index';
@@ -15,8 +15,78 @@ interface AdmissionStats {
 
 // ─── Composant ───────────────────────────────────────────────────────────────
 
+
+const MODES_SORTIE = ['Domicile', 'Transfert', 'Décès', 'Fugue', 'Autre'] as const;
+
+function ModalSortie({ sejourId, patientName, onClose, onDone }: {
+  sejourId: string; patientName: string; onClose: () => void; onDone: () => void;
+}) {
+  const now = new Date();
+  now.setSeconds(0, 0);
+  const [form, setForm]     = useState({ dateSortie: now.toISOString().slice(0, 16), modeSortie: '' });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr]       = useState<string | null>(null);
+
+  async function save() {
+    if (!form.modeSortie) { setErr('Sélectionnez un type de sortie.'); return; }
+    setSaving(true); setErr(null);
+    try {
+      await client.patch(`/sejours/${sejourId}/cloturer`, {
+        dateSortie: new Date(form.dateSortie).toISOString(),
+        modeSortie: form.modeSortie,
+      });
+      onDone();
+    } catch (e: any) { setErr(e?.message ?? 'Erreur.'); }
+    finally { setSaving(false); }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: 'var(--c-bg)', borderRadius: 12, width: '100%', maxWidth: 440, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--c-bdr)' }}>
+          <div>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: 'var(--c-t0)' }}>Enregistrer la sortie</p>
+            <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--c-t3)' }}>{patientName}</p>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-t3)', display: 'flex' }}><X size={18} /></button>
+        </div>
+        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {err && <div className="adm-alert adm-alert-error">{err}</div>}
+          <div className="adm-form-field">
+            <label className="adm-label">Date et heure de sortie *</label>
+            <input type="datetime-local" className="adm-input" value={form.dateSortie}
+              onChange={e => setForm(f => ({ ...f, dateSortie: e.target.value }))} />
+          </div>
+          <div className="adm-form-field">
+            <label className="adm-label">Type de sortie *</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+              {MODES_SORTIE.map(m => (
+                <button key={m} type="button" onClick={() => setForm(f => ({ ...f, modeSortie: m }))}
+                  style={{ padding: '8px 6px', borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 600, textAlign: 'center',
+                    border: form.modeSortie === m ? '2px solid var(--c-primary)' : '1px solid var(--c-bdr)',
+                    background: form.modeSortie === m ? 'var(--c-accent-bg)' : 'var(--c-surf2)',
+                    color: form.modeSortie === m ? 'var(--c-primary)' : 'var(--c-t1)',
+                  }}>
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', padding: '12px 20px', borderTop: '1px solid var(--c-bdr)' }}>
+          <button onClick={onClose} className="adm-btn" style={{ height: 34 }}>Annuler</button>
+          <button onClick={save} disabled={saving} className="adm-btn adm-btn-primary" style={{ height: 34, gap: 6 }}>
+            {saving ? <><Loader2 size={13} style={{ animation: 'spin 0.7s linear infinite' }} /> Enregistrement…</> : <><Save size={13} /> Confirmer la sortie</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 export default function AdmissionList() {
   const { navigate } = useNavigation();
+  const [sortieModal, setSortieModal] = useState<{ sejourId: string; patientName: string } | null>(null);
 
   const [search,       setSearch]       = useState('');
   const [statusFilter, setStatusFilter] = useState<AdmissionStatus | 'all'>('all');
@@ -77,6 +147,7 @@ export default function AdmissionList() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
+    <>
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
       {/* ── Stats ── */}
@@ -269,7 +340,7 @@ export default function AdmissionList() {
 
                             {/* Sortie */}
                             <button
-                              onClick={() => navigate('admission-discharge', adm.id)}
+                              onClick={() => setSortieModal({ sejourId: adm.id, patientName: adm.patientName })}
                               title="Enregistrer la sortie"
                               disabled={adm.status !== 'active'}
                               style={{
@@ -306,5 +377,20 @@ export default function AdmissionList() {
         )}
       </div>
     </div>
+
+    {sortieModal && (
+      <ModalSortie
+        sejourId={sortieModal.sejourId}
+        patientName={sortieModal.patientName}
+        onClose={() => setSortieModal(null)}
+        onDone={() => {
+          setSortieModal(null);
+          // Relancer la recherche pour rafraîchir la liste
+          setSearch(s => s);
+        }}
+      />
+    )}
+    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </>
   );
 }
