@@ -5,6 +5,7 @@ import { searchCIM10, type CIM10Entry } from '../../data/cim10';
 interface CIM10InputProps {
   value: string;
   onChange: (value: string) => void;
+  onSelect?: (entry: CIM10Entry) => void;
   placeholder?: string;
 }
 
@@ -14,7 +15,7 @@ const TYPE_COLORS: Record<CIM10Entry['type'], { bg: string; color: string; label
   code:      { bg: '#fef3c7', color: '#d97706', label: 'Code' },
 };
 
-export default function CIM10Input({ value, onChange, placeholder }: CIM10InputProps) {
+export default function CIM10Input({ value, onChange, onSelect, placeholder }: CIM10InputProps) {
   const [query,       setQuery]       = useState('');
   const [results,     setResults]     = useState<CIM10Entry[]>([]);
   const [open,        setOpen]        = useState(false);
@@ -22,7 +23,6 @@ export default function CIM10Input({ value, onChange, placeholder }: CIM10InputP
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef  = useRef<HTMLDivElement>(null);
 
-  // Sync affichage quand la valeur externe change
   useEffect(() => {
     if (!value) setQuery('');
   }, [value]);
@@ -42,9 +42,17 @@ export default function CIM10Input({ value, onChange, placeholder }: CIM10InputP
   };
 
   const select = (entry: CIM10Entry) => {
-    const display = `${entry.code} — ${entry.libelle}`;
-    setQuery(display);
-    onChange(display);
+    if (onSelect) {
+      // Mode "deux champs" : le code dans l'input, le libellé dans un champ séparé
+      setQuery(entry.code);
+      onChange(entry.code);
+      onSelect(entry);
+    } else {
+      // Mode "champ unique" : affiche "CODE — libellé"
+      const display = `${entry.code} — ${entry.libelle}`;
+      setQuery(display);
+      onChange(display);
+    }
     setOpen(false);
     setResults([]);
   };
@@ -73,7 +81,6 @@ export default function CIM10Input({ value, onChange, placeholder }: CIM10InputP
     }
   };
 
-  // Scroll l'élément mis en surbrillance dans la vue
   useEffect(() => {
     if (!listRef.current) return;
     const el = listRef.current.querySelector<HTMLDivElement>(`[data-idx="${highlighted}"]`);
@@ -143,7 +150,6 @@ export default function CIM10Input({ value, onChange, placeholder }: CIM10InputP
                   transition: 'background 0.1s',
                 }}
               >
-                {/* Badge code */}
                 <span style={{
                   fontFamily: "'JetBrains Mono', monospace",
                   fontSize: '11px', fontWeight: 700,
@@ -154,8 +160,6 @@ export default function CIM10Input({ value, onChange, placeholder }: CIM10InputP
                 }}>
                   {entry.code}
                 </span>
-
-                {/* Libellé */}
                 <span style={{
                   flex: 1, fontSize: '12px', color: 'var(--c-t1)',
                   lineHeight: 1.4, minWidth: 0,
@@ -163,8 +167,6 @@ export default function CIM10Input({ value, onChange, placeholder }: CIM10InputP
                 }}>
                   {entry.libelle}
                 </span>
-
-                {/* Type pill */}
                 <span style={{
                   fontSize: '9px', fontWeight: 700, textTransform: 'uppercase',
                   letterSpacing: '0.5px', color: colors.color,
