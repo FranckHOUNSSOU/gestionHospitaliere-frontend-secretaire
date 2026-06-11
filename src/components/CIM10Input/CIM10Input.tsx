@@ -124,13 +124,14 @@ export default function CIM10Input({ value, onChange, onSelect, placeholder }: C
         <div
           ref={listRef}
           style={{
-            position: 'absolute', top: '100%', left: 0, right: 0,
+            position: 'absolute', top: '100%', left: 0,
             zIndex: 100, background: 'var(--c-surf)',
             border: '1px solid var(--c-bdr)',
             borderRadius: '8px',
             boxShadow: '0 6px 20px rgba(0,0,0,0.13)',
             marginTop: '4px',
-            maxHeight: '280px', overflowY: 'auto',
+            maxHeight: '300px', overflowY: 'auto',
+            minWidth: '420px', width: 'max-content', maxWidth: '90vw',
           }}
         >
           {results.map((entry, idx) => {
@@ -144,36 +145,30 @@ export default function CIM10Input({ value, onChange, onSelect, placeholder }: C
                 onMouseEnter={() => setHighlighted(idx)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '10px',
-                  padding: '8px 12px', cursor: 'pointer',
+                  padding: '9px 14px', cursor: 'pointer',
                   borderBottom: '1px solid var(--c-bdr)',
                   background: isActive ? 'var(--c-surf2)' : 'transparent',
                   transition: 'background 0.1s',
                 }}
               >
+                {/* Code */}
                 <span style={{
                   fontFamily: "'JetBrains Mono', monospace",
                   fontSize: '11px', fontWeight: 700,
                   background: colors.bg, color: colors.color,
-                  padding: '2px 6px', borderRadius: '4px',
+                  padding: '2px 7px', borderRadius: '4px',
                   whiteSpace: 'nowrap', flexShrink: 0,
-                  minWidth: '72px', textAlign: 'center',
+                  minWidth: '80px', textAlign: 'center',
                 }}>
                   {entry.code}
                 </span>
+
+                {/* Libellé complet — jamais tronqué */}
                 <span style={{
-                  flex: 1, fontSize: '12px', color: 'var(--c-t1)',
-                  lineHeight: 1.4, minWidth: 0,
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  fontSize: '12px', color: 'var(--c-t1)',
+                  lineHeight: 1.4, whiteSpace: 'nowrap',
                 }}>
                   {entry.libelle}
-                </span>
-                <span style={{
-                  fontSize: '9px', fontWeight: 700, textTransform: 'uppercase',
-                  letterSpacing: '0.5px', color: colors.color,
-                  background: colors.bg, padding: '1px 5px',
-                  borderRadius: '99px', flexShrink: 0,
-                }}>
-                  {colors.label}
                 </span>
               </div>
             );
