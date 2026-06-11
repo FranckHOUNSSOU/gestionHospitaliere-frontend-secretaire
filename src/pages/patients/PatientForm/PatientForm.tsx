@@ -126,7 +126,7 @@ export default function PatientForm() {
                 <div className="adm-form-field">
                   <label className="adm-label">Ville</label>
                   <input type="text" value={form.city} onChange={(e) => handleChange('city', e.target.value)}
-                    className="adm-input" placeholder="Conakry, Kindia..." />
+                    className="adm-input" placeholder="" />
                 </div>
               </div>
             </div>

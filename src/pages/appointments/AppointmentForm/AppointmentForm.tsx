@@ -171,7 +171,7 @@ export default function AppointmentForm() {
                     </span>
                     <input
                       className="adm-search-input"
-                      placeholder="Ex : ZANMENOU ou IPP-2026-0004"
+                      placeholder=""
                       value={patientQuery}
                       onChange={(e) => { setSelectedPatient(null); setPatientQuery(e.target.value); }}
                       onFocus={() => patientResults.length > 0 && setShowDropdown(true)}
