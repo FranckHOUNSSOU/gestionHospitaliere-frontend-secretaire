@@ -63,6 +63,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
     medecinResponsableId:  '',
     modeEntree:            '',
     motifHospitalisation:  '',
+    codeCIM10:             '',
     dateAdmission:         new Date().toISOString().slice(0, 16),
     numeroSejour:          genNumeroSejour(),
     numeroChambre:         '',
