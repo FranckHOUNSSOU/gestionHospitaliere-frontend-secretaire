@@ -4,6 +4,7 @@ import { useNavigation } from '../../../context/NavigationContext';
 import { useAuth } from '../../../context/AuthContext';
 import client from '../../../services/clients';
 import { patientsData, type Patient } from '../../../services/patients';
+import CIM10Input from '../../../components/CIM10Input/CIM10Input';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -185,6 +186,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
         medecinResponsableId: form.medecinResponsableId || undefined,
         modeEntree:           form.modeEntree,
         motifHospitalisation: form.motifHospitalisation.trim(),
+        codeCIM10:            form.codeCIM10 || undefined,
         dateAdmission:        new Date(form.dateAdmission).toISOString(),
       });
 
@@ -264,7 +266,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                     </span>
                     <input
                       className="adm-search-input"
-                      placeholder="Ex : ZANMENOU ou IPP-2026-0004"
+                      placeholder=""
                       value={patientQuery}
                       onChange={e => handlePatientSearch(e.target.value)}
                       onFocus={() => patientResults.length > 0 && setShowResults(true)}
@@ -456,7 +458,21 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                     value={form.motifHospitalisation}
                     onChange={e => setForm(f => ({ ...f, motifHospitalisation: e.target.value }))}
                     className="adm-input"
-                    placeholder="Ex : Douleurs abdominales aiguës"
+                    placeholder=""
+                  />
+                </div>
+
+                {/* Diagnostic CIM-10 */}
+                <div className="adm-form-field" style={{ gridColumn: '1 / -1' }}>
+                  <label className="adm-label">
+                    Code diagnostic CIM-10
+                    <span style={{ marginLeft: 6, fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: 'var(--c-t3)' }}>
+                      (optionnel — tapez le code ou le libellé)
+                    </span>
+                  </label>
+                  <CIM10Input
+                    value={form.codeCIM10}
+                    onChange={v => setForm(f => ({ ...f, codeCIM10: v }))}
                   />
                 </div>
 
@@ -570,6 +586,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                 { label: 'Service', value: services.find(s => s.id === selectedService)?.nom ?? '—' },
                 { label: 'Médecin', value: selectedMedecin ? `Dr. ${selectedMedecin.prenom} ${selectedMedecin.nom}` : '—' },
                 { label: 'Mode',    value: form.modeEntree || '—' },
+                { label: 'CIM-10',  value: form.codeCIM10 ? form.codeCIM10.split(' — ')[0] : '—' },
                 { label: 'Entrée',  value: form.dateAdmission ? new Date(form.dateAdmission).toLocaleDateString('fr-FR') : '—' },
                 ...(form.typeSejour === 'Hospitalisation' || form.typeSejour === 'Urgences' ? [
                   { label: 'Chambre', value: form.numeroChambre || '—' },
