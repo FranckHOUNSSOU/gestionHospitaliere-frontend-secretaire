@@ -8,6 +8,8 @@ import {
   AlertTriangle, Pill, Phone, Building2, Stethoscope, HeartPulse, FileText, Activity,
 } from 'lucide-react';
 import client from '../../../services/clients';
+import CIM10Input from '../../../components/CIM10Input/CIM10Input';
+import type { CIM10Entry } from '../../../data/cim10';
 
 // ── Enums ────────────────────────────────────────────────────────────────────
 
@@ -1131,7 +1133,12 @@ function ModalDiagnostics({ sejour, items, onClose, onChanged }: {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
         <div className="adm-form-field">
           <label className="adm-label">Code CIM-10 *</label>
-          <input className="adm-input" placeholder="Ex : K35.2" value={form.codeCim10} onChange={e => setForm(f => ({ ...f, codeCim10: e.target.value }))} />
+          <CIM10Input
+            value={form.codeCim10}
+            onChange={v => setForm(f => ({ ...f, codeCim10: v }))}
+            onSelect={(entry: CIM10Entry) => setForm(f => ({ ...f, codeCim10: entry.code, libelle: entry.libelle }))}
+            placeholder="F00-F99, K35, grippe…"
+          />
         </div>
         <div className="adm-form-field">
           <label className="adm-label">Libellé *</label>
