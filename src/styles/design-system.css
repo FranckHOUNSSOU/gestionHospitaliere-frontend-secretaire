@@ -1342,3 +1342,44 @@
 }
 .adm-kpi-danger::before { background: var(--c-red) !important; }
 
+/* ── PHONE INPUT (react-international-phone) ── */
+.adm-phone-input {
+  display: flex !important;
+  width: 100% !important;
+  border: 1px solid var(--c-bdr) !important;
+  border-radius: 0.4375rem !important;
+  overflow: hidden !important;
+  background: var(--c-surf) !important;
+  transition: border-color 0.15s, box-shadow 0.15s !important;
+  box-sizing: border-box !important;
+}
+.adm-phone-input:focus-within {
+  border-color: var(--c-accent) !important;
+  box-shadow: 0 0 0 0.1875rem rgba(14, 165, 233, 0.12) !important;
+}
+.adm-phone-input .react-international-phone-country-selector-button {
+  align-self: stretch !important;
+  border: none !important;
+  border-right: 1px solid var(--c-bdr) !important;
+  border-radius: 0 !important;
+  margin-right: 0 !important;
+  background: var(--c-surf2) !important;
+  padding: 0 0.5rem !important;
+}
+.adm-phone-input .react-international-phone-country-selector-button:hover {
+  background: var(--c-surf3) !important;
+}
+.adm-phone-input .react-international-phone-input {
+  flex: 1 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0.5rem 0.625rem !important;
+  font-family: 'Roboto', system-ui, sans-serif !important;
+  font-size: 0.8125rem !important;
+  color: var(--c-t0) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  line-height: 1.4 !important;
+}
+

@@ -111,7 +111,7 @@ export default function PatientForm() {
               <div className="adm-form-grid adm-form-grid-2">
                 <div className="adm-form-field">
                   <label className="adm-label">Téléphone *</label>
-                  <PhoneInput defaultCountry="bj" value={form.phone} onChange={(phone) => handleChange('phone', phone)} inputClassName="adm-input" />
+                  <PhoneInput defaultCountry="bj" value={form.phone} onChange={(phone) => handleChange('phone', phone)} className="adm-phone-input" />
                 </div>
                 <div className="adm-form-field">
                   <label className="adm-label">Email</label>
@@ -147,7 +147,7 @@ export default function PatientForm() {
                 </div>
                 <div className="adm-form-field">
                   <label className="adm-label">Téléphone</label>
-                  <PhoneInput defaultCountry="bj" value={form.emergencyPhone} onChange={(phone) => handleChange('emergencyPhone', phone)} inputClassName="adm-input" />
+                  <PhoneInput defaultCountry="bj" value={form.emergencyPhone} onChange={(phone) => handleChange('emergencyPhone', phone)} className="adm-phone-input" />
                 </div>
               </div>
             </div>
