@@ -20,6 +20,7 @@
     "react-big-calendar": "^1.19.4",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.2.4",
+    "react-international-phone": "^4.8.0",
     "react-router-dom": "^7.14.1"
   },
   "devDependencies": {
