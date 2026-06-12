@@ -116,7 +116,7 @@ export default function PatientForm() {
                 <div className="adm-form-field">
                   <label className="adm-label">Email</label>
                   <input type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)}
-                    className="adm-input" placeholder="exemple@gmail.com" />
+                    className="adm-input" placeholder="Adresse e-mail" />
                 </div>
                 <div className="adm-form-field">
                   <label className="adm-label">Adresse</label>
