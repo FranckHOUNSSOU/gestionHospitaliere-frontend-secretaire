@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, Save, User, Phone, MapPin, Shield, AlertTriangle } from 'lucide-react';
+import { PhoneInput } from 'react-international-phone';
 import { useNavigation } from '../../../context/NavigationContext';
 import { patients } from '../../../services/mockData';
 
@@ -110,8 +111,7 @@ export default function PatientForm() {
               <div className="adm-form-grid adm-form-grid-2">
                 <div className="adm-form-field">
                   <label className="adm-label">Téléphone *</label>
-                  <input type="tel" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)}
-                    className="adm-input" placeholder="+224 6XX XX XX XX" />
+                  <PhoneInput defaultCountry="bj" value={form.phone} onChange={(phone) => handleChange('phone', phone)} inputClassName="adm-input" />
                 </div>
                 <div className="adm-form-field">
                   <label className="adm-label">Email</label>
@@ -147,8 +147,7 @@ export default function PatientForm() {
                 </div>
                 <div className="adm-form-field">
                   <label className="adm-label">Téléphone</label>
-                  <input type="tel" value={form.emergencyPhone} onChange={(e) => handleChange('emergencyPhone', e.target.value)}
-                    className="adm-input" placeholder="+224 6XX XX XX XX" />
+                  <PhoneInput defaultCountry="bj" value={form.emergencyPhone} onChange={(phone) => handleChange('emergencyPhone', phone)} inputClassName="adm-input" />
                 </div>
               </div>
             </div>
