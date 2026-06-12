@@ -396,22 +396,22 @@ function ModalSoins({ sejour, items, onClose, onChanged }: {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div className="adm-form-field">
           <label className="adm-label">Cible (problème traité) *</label>
-          <input className="adm-input" placeholder="Ex : Douleur, Anxiété, Plaie" value={form.cible}
+          <input className="adm-input" value={form.cible}
             onChange={e => setForm(f => ({ ...f, cible: e.target.value }))} />
         </div>
         <div className="adm-form-field">
           <label className="adm-label">Données observées</label>
-          <input className="adm-input" placeholder="Ex : Patient se plaint de douleurs EVA 7" value={form.donneesObservees}
+          <input className="adm-input" value={form.donneesObservees}
             onChange={e => setForm(f => ({ ...f, donneesObservees: e.target.value }))} />
         </div>
         <div className="adm-form-field">
           <label className="adm-label">Actions réalisées</label>
-          <input className="adm-input" placeholder="Ex : Administration antalgique, pansement" value={form.actionsRealisees}
+          <input className="adm-input" value={form.actionsRealisees}
             onChange={e => setForm(f => ({ ...f, actionsRealisees: e.target.value }))} />
         </div>
         <div className="adm-form-field">
           <label className="adm-label">Résultats obtenus</label>
-          <input className="adm-input" placeholder="Ex : Diminution douleur EVA 7→3" value={form.resultatsObtenus}
+          <input className="adm-input" value={form.resultatsObtenus}
             onChange={e => setForm(f => ({ ...f, resultatsObtenus: e.target.value }))} />
         </div>
       </div>
@@ -822,11 +822,11 @@ function ModalAllergies({ patientId, items, onClose, onChanged }: {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <div className="adm-form-field">
           <label className="adm-label">Allergène *</label>
-          <input className="adm-input" placeholder="Ex : Pénicilline" value={form.allergene} onChange={e => setForm(f => ({ ...f, allergene: e.target.value }))} />
+          <input className="adm-input" value={form.allergene} onChange={e => setForm(f => ({ ...f, allergene: e.target.value }))} />
         </div>
         <div className="adm-form-field">
           <label className="adm-label">Type de réaction</label>
-          <input className="adm-input" placeholder="Ex : Urticaire" value={form.typeReaction} onChange={e => setForm(f => ({ ...f, typeReaction: e.target.value }))} />
+          <input className="adm-input" value={form.typeReaction} onChange={e => setForm(f => ({ ...f, typeReaction: e.target.value }))} />
         </div>
         <div className="adm-form-field">
           <label className="adm-label">Sévérité</label>
@@ -895,15 +895,15 @@ function ModalTraitements({ patientId, items, onClose, onChanged }: {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <div className="adm-form-field">
           <label className="adm-label">Médicament *</label>
-          <input className="adm-input" placeholder="Ex : Warfarine" value={form.nomMedicament} onChange={e => setForm(f => ({ ...f, nomMedicament: e.target.value }))} />
+          <input className="adm-input" value={form.nomMedicament} onChange={e => setForm(f => ({ ...f, nomMedicament: e.target.value }))} />
         </div>
         <div className="adm-form-field">
           <label className="adm-label">Classe thérapeutique</label>
-          <input className="adm-input" placeholder="Ex : Anticoagulant" value={form.classe} onChange={e => setForm(f => ({ ...f, classe: e.target.value }))} />
+          <input className="adm-input" value={form.classe} onChange={e => setForm(f => ({ ...f, classe: e.target.value }))} />
         </div>
         <div className="adm-form-field">
           <label className="adm-label">Posologie en cours</label>
-          <input className="adm-input" placeholder="Ex : 5mg/j" value={form.posologieEnCours} onChange={e => setForm(f => ({ ...f, posologieEnCours: e.target.value }))} />
+          <input className="adm-input" value={form.posologieEnCours} onChange={e => setForm(f => ({ ...f, posologieEnCours: e.target.value }))} />
         </div>
         <div className="adm-form-field">
           <label className="adm-label">Niveau d'alerte</label>
@@ -974,7 +974,7 @@ function ModalContacts({ patientId, items, onClose, onChanged }: {
         </div>
         <div className="adm-form-field">
           <label className="adm-label">Lien de parenté *</label>
-          <input className="adm-input" placeholder="Ex : Épouse, Frère" value={form.lienParente} onChange={e => setForm(f => ({ ...f, lienParente: e.target.value }))} />
+          <input className="adm-input" value={form.lienParente} onChange={e => setForm(f => ({ ...f, lienParente: e.target.value }))} />
         </div>
         <div className="adm-form-field">
           <label className="adm-label">Téléphone *</label>
@@ -1045,11 +1045,11 @@ function ModalCouvertures({ patientId, items, onClose, onChanged }: {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <div className="adm-form-field">
           <label className="adm-label">Type *</label>
-          <input className="adm-input" placeholder="Ex : Assurance maladie" value={form.typeCouverture} onChange={e => setForm(f => ({ ...f, typeCouverture: e.target.value }))} />
+          <input className="adm-input" value={form.typeCouverture} onChange={e => setForm(f => ({ ...f, typeCouverture: e.target.value }))} />
         </div>
         <div className="adm-form-field">
           <label className="adm-label">Organisme *</label>
-          <input className="adm-input" placeholder="Ex : CNSS Bénin" value={form.nomOrganisme} onChange={e => setForm(f => ({ ...f, nomOrganisme: e.target.value }))} />
+          <input className="adm-input" value={form.nomOrganisme} onChange={e => setForm(f => ({ ...f, nomOrganisme: e.target.value }))} />
         </div>
         <div className="adm-form-field">
           <label className="adm-label">N° Assuré *</label>
@@ -1142,7 +1142,7 @@ function ModalDiagnostics({ sejour, items, onClose, onChanged }: {
         </div>
         <div className="adm-form-field">
           <label className="adm-label">Libellé *</label>
-          <input className="adm-input" placeholder="Ex : Appendicite aiguë" value={form.libelle} onChange={e => setForm(f => ({ ...f, libelle: e.target.value }))} />
+          <input className="adm-input" value={form.libelle} onChange={e => setForm(f => ({ ...f, libelle: e.target.value }))} />
         </div>
         <div className="adm-form-field" style={{ gridColumn: '1 / -1' }}>
           <label className="adm-label">Statut</label>

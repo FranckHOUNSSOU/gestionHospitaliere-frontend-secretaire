@@ -537,7 +537,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                     <label className="adm-label">N° de lit</label>
                     <input
                       className="adm-input"
-                      placeholder="Ex : 1, 2, 3…"
+                      placeholder="N° de lit"
                       value={form.numeroLit}
                       disabled={!form.numeroChambre}
                       onChange={e => setForm(f => ({ ...f, numeroLit: e.target.value }))}
