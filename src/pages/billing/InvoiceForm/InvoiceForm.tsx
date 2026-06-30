@@ -1,21 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Search, X, Loader2, FileText } from 'lucide-react';
 import { useNavigation } from '../../../context/NavigationContext';
-import { patientsData, type Patient } from '../../../services/patients';
+import { getPatient } from '../../../services/getPatient';
 
 export default function InvoiceForm() {
   const { navigate } = useNavigation();
 
   const [query,        setQuery]        = useState('');
-  const [results,      setResults]      = useState<Patient[]>([]);
+  const [results,      setResults]      = useState([]);
   const [searching,    setSearching]    = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dropdownRef = useRef(null as any);
+  const searchTimer = useRef(null as any);
 
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setShowDropdown(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowDropdown(false);
     }
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -27,13 +27,13 @@ export default function InvoiceForm() {
     searchTimer.current = setTimeout(async () => {
       setSearching(true);
       try {
-        const data = await patientsData.rechercher(query);
+        const data = await getPatient.rechercher(query);
         setResults(data); setShowDropdown(true);
       } catch { setResults([]); } finally { setSearching(false); }
     }, 300);
   }, [query]);
 
-  function selectPatient(p: Patient) {
+  function selectPatient(p: any) {
     setShowDropdown(false);
     navigate('billing-detail', p.id);
   }
@@ -80,7 +80,7 @@ export default function InvoiceForm() {
 
             {showDropdown && results.length > 0 && (
               <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--c-bg)', border: '1px solid var(--c-bdr)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', marginTop: 4, maxHeight: 300, overflowY: 'auto' }}>
-                {results.map(p => (
+                {(results as any[]).map(p => (
                   <div key={p.id} onMouseDown={() => selectPatient(p)}
                     style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', cursor: 'pointer', borderBottom: '1px solid var(--c-bdr)' }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--c-surf2)')}

@@ -1,19 +1,7 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Eye, Loader2 } from 'lucide-react';
 import { useNavigation } from '../../../context/NavigationContext';
-import client from '../../../services/clients';
-
-interface Facture {
-  id: string;
-  numeroFacture: string;
-  patientId: string | null;
-  patientNom: string;
-  patientPrenom: string;
-  montantTotal: number;
-  statut: string;
-  snapshot?: { patient?: { id?: string } };
-  createdAt: string;
-}
+import { getFacture } from '../../../services/getFacture';
 
 const STATUT_STYLE: Record<string, { bg: string; color: string }> = {
   'Émise':   { bg: '#fef3c7', color: '#92400e' },
@@ -23,20 +11,20 @@ const STATUT_STYLE: Record<string, { bg: string; color: string }> = {
 
 export default function InvoiceList() {
   const { navigate } = useNavigation();
-  const [factures,  setFactures]  = useState<Facture[]>([]);
+  const [factures,  setFactures]  = useState([]);
   const [loading,   setLoading]   = useState(true);
-  const [erreur,    setErreur]    = useState<string | null>(null);
+  const [erreur,    setErreur]    = useState(null as any);
   const [search,    setSearch]    = useState('');
   const [filtre,    setFiltre]    = useState('');
 
   useEffect(() => {
-    client.get<Facture[]>('/facturation/factures')
-      .then(r => setFactures(r.data))
+    getFacture.getFactures()
+      .then(data => setFactures(data))
       .catch(() => setErreur('Impossible de charger les factures.'))
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = factures.filter(f => {
+  const filtered = factures.filter((f: any) => {
     const q = search.toLowerCase();
     const matchSearch = !q ||
       f.numeroFacture.toLowerCase().includes(q) ||
@@ -46,9 +34,9 @@ export default function InvoiceList() {
     return matchSearch && matchStatut;
   });
 
-  const totalEmis  = factures.reduce((s, f) => s + Number(f.montantTotal), 0);
-  const totalPaye  = factures.filter(f => f.statut === 'Payée').reduce((s, f) => s + Number(f.montantTotal), 0);
-  const totalAttente = factures.filter(f => f.statut === 'Émise').reduce((s, f) => s + Number(f.montantTotal), 0);
+  const totalEmis    = factures.reduce((s, f: any) => s + Number(f.montantTotal), 0);
+  const totalPaye    = factures.filter((f: any) => f.statut === 'Payée').reduce((s, f: any) => s + Number(f.montantTotal), 0);
+  const totalAttente = factures.filter((f: any) => f.statut === 'Émise').reduce((s, f: any) => s + Number(f.montantTotal), 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -116,7 +104,7 @@ export default function InvoiceList() {
                   <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: 'var(--c-t3)' }}>
                     Aucune facture trouvée.
                   </td></tr>
-                ) : filtered.map(f => {
+                ) : (filtered as any[]).map(f => {
                   const st = STATUT_STYLE[f.statut] ?? { bg: '#f1f5f9', color: '#64748b' };
                   return (
                     <tr key={f.id}>
@@ -156,7 +144,7 @@ export default function InvoiceList() {
         <div className="adm-card-footer">
           <span style={{ fontSize: 12, color: 'var(--c-t2)' }}>{filtered.length} facture{filtered.length > 1 ? 's' : ''}</span>
           <span style={{ fontSize: 12, color: 'var(--c-t2)' }}>
-            Total affiché : {filtered.reduce((s, f) => s + Number(f.montantTotal), 0).toLocaleString('fr-FR')} FCFA
+            Total affiché : {(filtered as any[]).reduce((s, f) => s + Number(f.montantTotal), 0).toLocaleString('fr-FR')} FCFA
           </span>
         </div>
       </div>

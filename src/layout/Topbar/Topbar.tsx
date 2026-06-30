@@ -1,32 +1,30 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import client from '../../services/clients';
-import { countNonLu } from '../../services/notificationService';
+import { getAuth } from '../../services/getAuth';
+import { getNotification } from '../../services/getNotification';
 
 export const Topbar = ({ minimized, onToggleSidebar }: {
   minimized: boolean;
   onToggleSidebar: () => void;
 }) => {
-  const { dark, toggle } = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [nonLu, setNonLu] = useState(0);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState(null as any);
 
   useEffect(() => {
-    countNonLu().then(r => setNonLu(r.data.count)).catch(() => {});
+    getNotification.countNonLu().then(data => setNonLu(data.count)).catch(() => {});
     const interval = setInterval(() => {
-      countNonLu().then(r => setNonLu(r.data.count)).catch(() => {});
+      getNotification.countNonLu().then(data => setNonLu(data.count)).catch(() => {});
     }, 60_000);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     if (!user) return;
-    client.get<{ photoUrl?: string | null }>('/auth/profil')
-      .then(res => setPhotoUrl(res.data.photoUrl ?? null))
+    getAuth.getProfil()
+      .then(data => setPhotoUrl(data.photoUrl ?? null))
       .catch(() => setPhotoUrl(null));
   }, [user]);
 
@@ -87,21 +85,6 @@ export const Topbar = ({ minimized, onToggleSidebar }: {
             }}>
               {nonLu > 99 ? '99+' : nonLu}
             </span>
-          )}
-        </button>
-
-        <button className="adm-icon-btn" onClick={toggle} title={dark ? 'Mode clair' : 'Mode sombre'}>
-          {dark ? (
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <circle cx="12" cy="12" r="5"/>
-              <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-              <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-            </svg>
-          ) : (
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-            </svg>
           )}
         </button>
 

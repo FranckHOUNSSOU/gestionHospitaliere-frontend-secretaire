@@ -1,115 +1,31 @@
-﻿import { useState, useEffect, useRef } from 'react';
-import { Plus, Search, BedDouble, CheckCircle2, ArrowRight, FolderOpen, LogOut, Loader2, X, Save } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Search, BedDouble, CheckCircle2, ArrowRight, FolderOpen, LogOut, Loader2 } from 'lucide-react';
 import Badge, { statusBadge } from '../../../components/ui/Badge/Badge';
 import { useNavigation } from '../../../context/NavigationContext';
-import type { Admission, AdmissionStatus } from '../../../types/index';
-import client from '../../../services/clients';
+import { getAdmission } from '../../../services/getAdmission';
+import ModalSortie from './ModalSortie';
 
-// ─── Types API ───────────────────────────────────────────────────────────────
-
-interface AdmissionStats {
-  active: number;
-  discharged: number;
-  transferred: number;
-}
-
-// ─── Composant ───────────────────────────────────────────────────────────────
-
-
-const MODES_SORTIE = ['Domicile', 'Transfert', 'Décès', 'Fugue', 'Autre'] as const;
-
-function ModalSortie({ sejourId, patientName, onClose, onDone }: {
-  sejourId: string; patientName: string; onClose: () => void; onDone: () => void;
-}) {
-  const now = new Date();
-  now.setSeconds(0, 0);
-  const [form, setForm]     = useState({ dateSortie: now.toISOString().slice(0, 16), modeSortie: '' });
-  const [saving, setSaving] = useState(false);
-  const [err, setErr]       = useState<string | null>(null);
-
-  async function save() {
-    if (!form.modeSortie) { setErr('Sélectionnez un type de sortie.'); return; }
-    setSaving(true); setErr(null);
-    try {
-      await client.patch(`/sejours/${sejourId}/cloturer`, {
-        dateSortie: new Date(form.dateSortie).toISOString(),
-        modeSortie: form.modeSortie,
-      });
-      onDone();
-    } catch (e: any) { setErr(e?.message ?? 'Erreur.'); }
-    finally { setSaving(false); }
-  }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: 'var(--c-bg)', borderRadius: 12, width: '100%', maxWidth: 440, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--c-bdr)' }}>
-          <div>
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: 'var(--c-t0)' }}>Enregistrer la sortie</p>
-            <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--c-t3)' }}>{patientName}</p>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-t3)', display: 'flex' }}><X size={18} /></button>
-        </div>
-        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {err && <div className="adm-alert adm-alert-error">{err}</div>}
-          <div className="adm-form-field">
-            <label className="adm-label">Date et heure de sortie *</label>
-            <input type="datetime-local" className="adm-input" value={form.dateSortie}
-              onChange={e => setForm(f => ({ ...f, dateSortie: e.target.value }))} />
-          </div>
-          <div className="adm-form-field">
-            <label className="adm-label">Type de sortie *</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-              {MODES_SORTIE.map(m => (
-                <button key={m} type="button" onClick={() => setForm(f => ({ ...f, modeSortie: m }))}
-                  style={{ padding: '8px 6px', borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 600, textAlign: 'center',
-                    border: form.modeSortie === m ? '2px solid var(--c-primary)' : '1px solid var(--c-bdr)',
-                    background: form.modeSortie === m ? 'var(--c-accent-bg)' : 'var(--c-surf2)',
-                    color: form.modeSortie === m ? 'var(--c-primary)' : 'var(--c-t1)',
-                  }}>
-                  {m}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', padding: '12px 20px', borderTop: '1px solid var(--c-bdr)' }}>
-          <button onClick={onClose} className="adm-btn" style={{ height: 34 }}>Annuler</button>
-          <button onClick={save} disabled={saving} className="adm-btn adm-btn-primary" style={{ height: 34, gap: 6 }}>
-            {saving ? <><Loader2 size={13} style={{ animation: 'spin 0.7s linear infinite' }} /> Enregistrement…</> : <><Save size={13} /> Confirmer la sortie</>}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 export default function AdmissionList() {
   const { navigate } = useNavigation();
-  const [sortieModal, setSortieModal] = useState<{ sejourId: string; patientName: string } | null>(null);
+  const [sortieModal, setSortieModal] = useState(null as any);
 
   const [search,       setSearch]       = useState('');
-  const [statusFilter, setStatusFilter] = useState<AdmissionStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState('all');
 
-  // Résultats de recherche
-  const [results,      setResults]      = useState<Admission[]>([]);
+  const [results,      setResults]      = useState([]);
   const [searching,    setSearching]    = useState(false);
-  const [searchError,  setSearchError]  = useState<string | null>(null);
+  const [searchError,  setSearchError]  = useState(null as any);
 
-  // Stats (chargées une fois au montage)
-  const [stats, setStats] = useState<AdmissionStats>({ active: 0, discharged: 0, transferred: 0 });
+  const [stats, setStats] = useState({ active: 0, discharged: 0, transferred: 0 });
 
-  // Debounce ref
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debounceRef = useRef(null as any);
 
-  // ── Chargement des stats au montage ──────────────────────────────────────
   useEffect(() => {
-    client.get<AdmissionStats>('/admissions/stats')
-      .then(res => setStats(res.data))
+    getAdmission.getStats()
+      .then(data => setStats(data))
       .catch(() => { /* stats non bloquantes */ });
   }, []);
 
-  // ── Recherche avec debounce ───────────────────────────────────────────────
   const hasQuery = search.trim().length > 0 || statusFilter !== 'all';
 
   useEffect(() => {
@@ -126,31 +42,26 @@ export default function AdmissionList() {
       setSearchError(null);
       try {
         const params: Record<string, string> = {};
-        if (search.trim())       params.q      = search.trim();
+        if (search.trim())          params.q      = search.trim();
         if (statusFilter !== 'all') params.statut = statusFilter;
 
-        // Endpoint : GET /admissions/recherche?q=...&statut=...
-        // Ajuste le chemin si ton API utilise une route différente
-        const res = await client.get<Admission[]>('/admissions/recherche', { params });
-        setResults(res.data);
+        const data = await getAdmission.rechercher(params);
+        setResults(data);
       } catch {
         setSearchError('Erreur lors de la recherche. Vérifiez votre connexion.');
         setResults([]);
       } finally {
         setSearching(false);
       }
-    }, 350); // 350 ms de debounce
+    }, 350);
 
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [search, statusFilter, hasQuery]);
-
-  // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
     <>
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-      {/* ── Stats ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
         {[
           { label: 'Admissions actives', value: stats.active,     icon: <BedDouble size={16} />,    kpi: 'adm-kpi-blue'   },
@@ -167,10 +78,7 @@ export default function AdmissionList() {
         ))}
       </div>
 
-      {/* ── Table card ── */}
       <div className="adm-card">
-
-        {/* Filtres */}
         <div className="adm-card-head" style={{ gap: '10px', flexWrap: 'wrap', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', gap: '8px', flex: 1, flexWrap: 'wrap' }}>
             <div className="adm-search" style={{ flex: 1, minWidth: '200px', maxWidth: '320px' }}>
@@ -187,7 +95,7 @@ export default function AdmissionList() {
             </div>
             <select
               value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value as AdmissionStatus | 'all')}
+              onChange={e => setStatusFilter(e.target.value)}
               className="adm-input"
               style={{ width: 'auto', padding: '6px 10px' }}
             >
@@ -202,10 +110,7 @@ export default function AdmissionList() {
           </button>
         </div>
 
-        {/* ── Contenu ── */}
         {!hasQuery ? (
-
-          /* Invitation à rechercher */
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '56px 24px', gap: '12px', color: 'var(--c-t3)' }}>
             <Search size={36} strokeWidth={1.4} style={{ opacity: 0.35 }} />
             <p style={{ margin: 0, fontSize: '14px', fontWeight: 500 }}>
@@ -217,14 +122,11 @@ export default function AdmissionList() {
           </div>
 
         ) : searchError ? (
-
-          /* Erreur API */
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', gap: '10px' }}>
             <p style={{ margin: 0, fontSize: '13px', color: '#ef4444' }}>{searchError}</p>
           </div>
 
         ) : (
-
           <div style={{ overflowX: 'auto' }}>
             <table className="adm-table">
               <thead>
@@ -247,7 +149,7 @@ export default function AdmissionList() {
                     </td>
                   </tr>
                 ) : (
-                  results.map(adm => {
+                  (results as any[]).map(adm => {
                     const { variant, label } = statusBadge(adm.status);
                     const days = adm.status === 'active'
                       ? Math.floor((Date.now() - new Date(adm.admissionDate).getTime()) / 86_400_000)
@@ -255,12 +157,10 @@ export default function AdmissionList() {
 
                     return (
                       <tr key={adm.id}>
-
-                        {/* Patient */}
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <div className="adm-avatar-sm" style={{ background: 'linear-gradient(135deg,#fbbf24,#f97316)' }}>
-                              {adm.patientName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                              {adm.patientName.split(' ').map((n: any) => n[0]).join('').slice(0, 2)}
                             </div>
                             <div>
                               <button onClick={() => navigate('patient-detail', adm.patientId)} className="adm-link-btn">
@@ -272,28 +172,20 @@ export default function AdmissionList() {
                             </div>
                           </div>
                         </td>
-
-                        {/* Service / Salle */}
                         <td>
                           <p className="adm-cell-name">{adm.department}</p>
                           <p className="adm-cell-mono">Salle {adm.room} · Lit {adm.bed}</p>
                         </td>
-
-                        {/* Médecin */}
                         <td>
                           <span className="adm-cell-mono" style={{ fontSize: '12px', color: 'var(--c-t1)' }}>
                             {adm.doctorName}
                           </span>
                         </td>
-
-                        {/* Entrée */}
                         <td>
                           <span className="adm-cell-mono">
                             {new Date(adm.admissionDate).toLocaleDateString('fr-FR')}
                           </span>
                         </td>
-
-                        {/* Sortie prévue */}
                         <td>
                           <span className="adm-cell-mono">
                             {adm.expectedDischargeDate
@@ -301,22 +193,14 @@ export default function AdmissionList() {
                               : '—'}
                           </span>
                         </td>
-
-                        {/* Motif */}
                         <td>
                           <span className="adm-cell-mono adm-text-truncate" style={{ maxWidth: '140px', display: 'block' }}>
                             {adm.reason}
                           </span>
                         </td>
-
-                        {/* Statut */}
                         <td><Badge variant={variant}>{label}</Badge></td>
-
-                        {/* ── Actions ── */}
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-
-                            {/* Dossier patient */}
                             <button
                               onClick={() => navigate('patient-file', adm.patientId)}
                               title="Compléter le dossier patient"
@@ -337,8 +221,6 @@ export default function AdmissionList() {
                             >
                               <FolderOpen size={14} />
                             </button>
-
-                            {/* Sortie */}
                             <button
                               onClick={() => setSortieModal({ sejourId: adm.id, patientName: adm.patientName })}
                               title="Enregistrer la sortie"
@@ -364,7 +246,6 @@ export default function AdmissionList() {
                             >
                               <LogOut size={14} />
                             </button>
-
                           </div>
                         </td>
                       </tr>
@@ -385,7 +266,6 @@ export default function AdmissionList() {
         onClose={() => setSortieModal(null)}
         onDone={() => {
           setSortieModal(null);
-          // Relancer la recherche pour rafraîchir la liste
           setSearch(s => s);
         }}
       />

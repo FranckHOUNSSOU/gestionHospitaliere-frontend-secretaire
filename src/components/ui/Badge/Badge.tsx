@@ -1,10 +1,4 @@
-interface BadgeProps {
-  variant: 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'blue';
-  children: React.ReactNode;
-  size?: 'sm' | 'md';
-}
-
-const variants: Record<BadgeProps['variant'], string> = {
+const variants: Record<string, string> = {
   success: 'adm-t-green',
   warning: 'adm-t-amber',
   error:   'adm-t-red',
@@ -13,12 +7,12 @@ const variants: Record<BadgeProps['variant'], string> = {
   blue:    'adm-t-blue',
 };
 
-export default function Badge({ variant, children }: BadgeProps) {
-  return <span className={`adm-tag ${variants[variant]}`}>{children}</span>;
+export default function Badge({ variant, children }: { variant: string; children: any }) {
+  return <span className={`adm-tag ${variants[variant] ?? 'adm-t-gray'}`}>{children}</span>;
 }
 
 export function statusBadge(status: string) {
-  const map: Record<string, { variant: BadgeProps['variant']; label: string }> = {
+  const map: Record<string, { variant: string; label: string }> = {
     active:       { variant: 'success', label: 'Actif' },
     hospitalized: { variant: 'blue',    label: 'Hospitalisé' },
     discharged:   { variant: 'neutral', label: 'Sorti' },
@@ -34,5 +28,5 @@ export function statusBadge(status: string) {
     overdue:      { variant: 'error',   label: 'En retard' },
     partial:      { variant: 'info',    label: 'Partielle' },
   };
-  return map[status] ?? { variant: 'neutral' as const, label: status };
+  return map[status] ?? { variant: 'neutral', label: status };
 }

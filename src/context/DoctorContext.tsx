@@ -1,27 +1,12 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
-import client from '../services/clients';
+import { getAuth } from '../services/getAuth';
 import { useAuth } from './AuthContext';
 
-export interface Doctor {
-  id: string;
-  name: string;
-  specialty: string;
-  department: string;
-  serviceCode: string;
-}
+const DoctorContext = createContext(null as any);
 
-interface DoctorContextType {
-  doctors: Doctor[];
-  loading: boolean;
-  refresh: () => void;
-}
-
-const DoctorContext = createContext<DoctorContextType | null>(null);
-
-export function DoctorProvider({ children }: { children: ReactNode }) {
+export function DoctorProvider({ children }: { children: any }) {
   const { user } = useAuth();
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
 
   async function fetchDoctors() {
@@ -30,15 +15,10 @@ export function DoctorProvider({ children }: { children: ReactNode }) {
       const params: Record<string, string> = { role: 'MEDECIN', actif: 'true' };
       if (user?.poleId) params.poleId = user.poleId;
 
-      const { data } = await client.get<Array<{
-        id: string;
-        nom: string;
-        prenom: string;
-        service?: { id: string; nom: string; code: string } | null;
-      }>>('/auth/users', { params });
+      const data = await getAuth.getMedecins(params);
 
       if (Array.isArray(data)) {
-        setDoctors(data.map((u) => ({
+        setDoctors(data.map((u: any) => ({
           id:          u.id,
           name:        `Dr. ${u.prenom} ${u.nom}`,
           specialty:   u.service?.nom ?? 'Médecine générale',

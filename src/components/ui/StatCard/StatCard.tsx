@@ -1,14 +1,3 @@
-import type { ReactNode } from 'react';
-
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  subtitle?: string;
-  icon: ReactNode;
-  color: 'blue' | 'emerald' | 'amber' | 'red' | 'cyan' | 'slate';
-  trend?: { value: string; up: boolean };
-}
-
 const colorKpiMap: Record<string, string> = {
   blue:    'adm-kpi-blue',
   emerald: 'adm-kpi-green',
@@ -27,12 +16,19 @@ const iconColorMap: Record<string, string> = {
   slate:   'var(--c-t2)',
 };
 
-export default function StatCard({ title, value, subtitle, icon, color, trend }: StatCardProps) {
+export default function StatCard({ title, value, subtitle, icon, color, trend }: {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  icon: any;
+  color: string;
+  trend?: { value: string; up: boolean };
+}) {
   return (
-    <div className={`adm-kpi ${colorKpiMap[color]}`}>
+    <div className={`adm-kpi ${colorKpiMap[color] ?? ''}`}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
         <p className="adm-kpi-lbl" style={{ marginBottom: 0 }}>{title}</p>
-        <div style={{ color: iconColorMap[color], opacity: 0.7, flexShrink: 0 }}>{icon}</div>
+        <div style={{ color: iconColorMap[color] ?? 'var(--c-t2)', opacity: 0.7, flexShrink: 0 }}>{icon}</div>
       </div>
       <div className="adm-kpi-val">{value}</div>
       {subtitle && <p className="adm-kpi-note adm-note-neutral">{subtitle}</p>}

@@ -1,30 +1,11 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Save, BedDouble, User, Stethoscope, Search, X, Loader2 } from 'lucide-react';
 import { useNavigation } from '../../../context/NavigationContext';
 import { useAuth } from '../../../context/AuthContext';
-import client from '../../../services/clients';
-import { patientsData, type Patient } from '../../../services/patients';
+import { getAuth } from '../../../services/getAuth';
+import { getPatient } from '../../../services/getPatient';
+import { postSejour } from '../../../services/postSejour';
 import CIM10Input from '../../../components/CIM10Input/CIM10Input';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface Medecin {
-  id: string;
-  nom: string;
-  prenom: string;
-}
-interface Service {
-  id: string;
-  nom: string;
-  code: string;
-}
-interface Chambre {
-  id: string;
-  numero: string;
-  designation: string | null;
-  etage: string | null;
-  capacite: number;
-}
 
 const TYPES_SEJOUR = [
   { value: 'Hospitalisation', label: 'Hospitalisation', desc: 'Admission avec lit/chambre assigné' },
@@ -32,34 +13,28 @@ const TYPES_SEJOUR = [
   { value: 'Urgences',        label: 'Urgences',        desc: 'Prise en charge immédiate' },
 ] as const;
 
-// Valeurs de l'enum ModeEntree côté backend
 const MODES_ENTREE = ['Urgences', 'Programmé', 'Transfert', 'Naissance', 'Autre'] as const;
 
-// Auto-génère un numéro de séjour unique
 function genNumeroSejour(): string {
   const year = new Date().getFullYear();
   const rand = Math.random().toString(36).slice(2, 7).toUpperCase();
   return `SEJ-${year}-${rand}`;
 }
 
-// ─── Composant ────────────────────────────────────────────────────────────────
-
 export default function AdmissionForm() {
-  const { navigate }   = useNavigation();
-  const { user }       = useAuth();
+  const { navigate } = useNavigation();
+  const { user }     = useAuth();
 
   const poleNom = user?.pole   ?? null;
   const poleId  = user?.poleId ?? null;
 
-  // ── Services du pôle ─────────────────────────────────────────────────────────
-const [services,        setServices]        = useState<Service[]>([]);
-const [servicesLoading, setServicesLoading] = useState(false);
-const [servicesErr,     setServicesErr]     = useState<string | null>(null);
-const [selectedService, setSelectedService] = useState<string>(''); // id du service choisi
+  const [services,        setServices]        = useState([] as any[]);
+  const [servicesLoading, setServicesLoading] = useState(false);
+  const [servicesErr,     setServicesErr]     = useState(null as any);
+  const [selectedService, setSelectedService] = useState('');
 
-  // ── État du formulaire ────────────────────────────────────────────────────
   const [form, setForm] = useState({
-    typeSejour:            'Hospitalisation' as string,
+    typeSejour:            'Hospitalisation',
     medecinResponsableId:  '',
     modeEntree:            '',
     motifHospitalisation:  '',
@@ -70,25 +45,22 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
     numeroLit:             '',
   });
 
-  // Patient sélectionné
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-
-  // ── Recherche patient ─────────────────────────────────────────────────────
-  const [patientQuery,   setPatientQuery]   = useState('');
-  const [patientResults, setPatientResults] = useState<Patient[]>([]);
-  const [patientLoading, setPatientLoading] = useState(false);
-  const [showResults,    setShowResults]    = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState(null as any);
+  const [patientQuery,    setPatientQuery]    = useState('');
+  const [patientResults,  setPatientResults]  = useState([]);
+  const [patientLoading,  setPatientLoading]  = useState(false);
+  const [showResults,     setShowResults]     = useState(false);
+  const debounceRef = useRef(null as any);
 
   const handlePatientSearch = (val: string) => {
     setPatientQuery(val);
-    if (selectedPatient) { setSelectedPatient(null); }
+    if (selectedPatient) setSelectedPatient(null);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (val.trim().length >= 2) {
       setPatientLoading(true);
       debounceRef.current = setTimeout(async () => {
         try {
-          const results = await patientsData.rechercher(val.trim());
+          const results = await getPatient.rechercher(val.trim());
           setPatientResults(results);
           setShowResults(true);
         } catch { setPatientResults([]); }
@@ -100,7 +72,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
     }
   };
 
-  const selectPatient = (p: Patient) => {
+  const selectPatient = (p: any) => {
     setSelectedPatient(p);
     setPatientQuery(`${p.prenom} ${p.nom} — ${p.numeroIpp}`);
     setShowResults(false);
@@ -113,60 +85,48 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
     setShowResults(false);
   };
 
-  // ── Médecins du pôle ──────────────────────────────────────────────────────
-  const [medecins,        setMedecins]        = useState<Medecin[]>([]);
+  const [medecins,        setMedecins]        = useState([] as any[]);
   const [medecinsLoading, setMedecinsLoading] = useState(false);
-  const [medecinsErr,     setMedecinsErr]     = useState<string | null>(null);
+  const [medecinsErr,     setMedecinsErr]     = useState(null as any);
 
-  // ── Chambres du service ──────────────────────────────────────────────────
-  const [chambres,        setChambres]        = useState<Chambre[]>([]);
+  const [chambres,        setChambres]        = useState([] as any[]);
   const [chambresLoading, setChambresLoading] = useState(false);
 
-    // ── Chargement des services du pôle ──────────────────────────────────────────
-    useEffect(() => {
-      if (!poleId) return;
-      setServicesLoading(true);
-      setServicesErr(null);
-      setSelectedService('');
-      setMedecins([]);
-      client
-        .get<Service[]>('/services', { params: { poleId } })
-        .then(res => setServices(res.data))
-        .catch(() => setServicesErr('Impossible de charger les services du pôle.'))
-        .finally(() => setServicesLoading(false));
-    }, [poleId]);
+  useEffect(() => {
+    if (!poleId) return;
+    setServicesLoading(true);
+    setServicesErr(null);
+    setSelectedService('');
+    setMedecins([]);
+    getAuth.getServices(poleId)
+      .then(data => setServices(data))
+      .catch(() => setServicesErr('Impossible de charger les services du pôle.'))
+      .finally(() => setServicesLoading(false));
+  }, [poleId]);
 
-    useEffect(() => {
-  if (!selectedService) {
-    setMedecins([]);   // vide la liste si aucun service choisi
-    return;
-  }
-  setMedecinsLoading(true);
-  setMedecinsErr(null);
-  client
-    .get<Medecin[]>('/auth/users', {
-      params: { role: 'MEDECIN', actif: 'true', serviceId: selectedService },
-    })
-    .then(res => setMedecins(res.data))
-    .catch(() => setMedecinsErr('Impossible de charger les médecins du service.'))
-    .finally(() => setMedecinsLoading(false));
-}, [selectedService]);
+  useEffect(() => {
+    if (!selectedService) { setMedecins([]); return; }
+    setMedecinsLoading(true);
+    setMedecinsErr(null);
+    getAuth.getMedecins({ role: 'MEDECIN', actif: 'true', serviceId: selectedService })
+      .then(data => setMedecins(data))
+      .catch(() => setMedecinsErr('Impossible de charger les médecins du service.'))
+      .finally(() => setMedecinsLoading(false));
+  }, [selectedService]);
 
   useEffect(() => {
     const needsRoom = form.typeSejour === 'Hospitalisation' || form.typeSejour === 'Urgences';
     if (!selectedService || !needsRoom) { setChambres([]); return; }
     setChambresLoading(true);
-    client
-      .get<Chambre[]>(`/chambres/service/${selectedService}`)
-      .then(res => setChambres(res.data.filter(c => (c as any).estActive !== false)))
+    getAuth.getChambres(selectedService)
+      .then(data => setChambres((data as any[]).filter((c: any) => c.estActive !== false)))
       .catch(() => setChambres([]))
       .finally(() => setChambresLoading(false));
   }, [selectedService, form.typeSejour]);
 
-  // ── Sauvegarde ────────────────────────────────────────────────────────────
-  const [saving,   setSaving]   = useState(false);
-  const [saveErr,  setSaveErr]  = useState<string | null>(null);
-  const [saved,    setSaved]    = useState(false);
+  const [saving,  setSaving]  = useState(false);
+  const [saveErr, setSaveErr] = useState(null as any);
+  const [saved,   setSaved]   = useState(false);
 
   const canSave = Boolean(
     selectedPatient &&
@@ -181,7 +141,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
     setSaving(true);
     setSaveErr(null);
     try {
-      const { data: sejour } = await client.post<{ id: string }>(`/sejours/patient/${selectedPatient.id}`, {
+      const sejour = await postSejour.createSejour(selectedPatient.id, {
         numeroSejour:         form.numeroSejour,
         typeSejour:           form.typeSejour,
         medecinResponsableId: form.medecinResponsableId || undefined,
@@ -191,10 +151,9 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
         dateAdmission:        new Date(form.dateAdmission).toISOString(),
       });
 
-      // Pour une hospitalisation, enregistrer l'affectation lit/chambre
       if (form.typeSejour === 'Hospitalisation' || form.typeSejour === 'Urgences') {
-        const serviceNom = services.find(s => s.id === selectedService)?.nom ?? '';
-        await client.post(`/sejours/${sejour.id}/mouvements`, {
+        const serviceNom = (services as any[]).find(s => s.id === selectedService)?.nom ?? '';
+        await postSejour.createMouvement(sejour.id, {
           dateHeureMouvement: new Date(form.dateAdmission).toISOString(),
           serviceArrivee:     serviceNom,
           numeroChambre:      form.numeroChambre || undefined,
@@ -204,21 +163,18 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
 
       setSaved(true);
       setTimeout(() => navigate('admissions'), 1200);
-    } catch (err: unknown) {
-      setSaveErr((err as Error)?.message ?? 'Erreur lors de l\'enregistrement.');
+    } catch (err: any) {
+      setSaveErr(err?.message ?? 'Erreur lors de l\'enregistrement.');
     } finally {
       setSaving(false);
     }
   };
 
-  const selectedMedecin = medecins.find(m => m.id === form.medecinResponsableId);
-
-  // ─── Render ───────────────────────────────────────────────────────────────
+  const selectedMedecin = (medecins as any[]).find(m => m.id === form.medecinResponsableId);
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button onClick={() => navigate('admissions')} className="adm-back-btn">
           <ArrowLeft size={16} />
@@ -231,7 +187,6 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
         </div>
       </div>
 
-      {/* Succès */}
       {saved && (
         <div className="adm-alert adm-alert-success" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Save size={14} style={{ flexShrink: 0 }} />
@@ -239,7 +194,6 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
         </div>
       )}
 
-      {/* Erreur sauvegarde */}
       {saveErr && (
         <div className="adm-alert adm-alert-danger" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           ⚠ {saveErr}
@@ -249,7 +203,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: '14px', alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
-          {/* ── Section Patient ── */}
+          {/* ── Patient ── */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
               <div className="adm-form-section-icon adm-fsi-blue"><User size={13} /></div>
@@ -279,10 +233,9 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                     )}
                   </div>
 
-                  {/* Dropdown résultats */}
                   {showResults && patientResults.length > 0 && (
                     <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--c-bg)', border: '1px solid var(--c-bdr)', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', marginTop: '4px', maxHeight: '240px', overflowY: 'auto' }}>
-                      {patientResults.map(p => (
+                      {(patientResults as any[]).map(p => (
                         <div
                           key={p.id}
                           onClick={() => selectPatient(p)}
@@ -323,7 +276,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
             </div>
           </div>
 
-          {/* ── Section Service (pré-rempli) ── */}
+          {/* ── Service / Pôle ── */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
               <div className="adm-form-section-icon adm-fsi-amber"><BedDouble size={13} /></div>
@@ -336,10 +289,8 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                   <BedDouble size={14} style={{ color: 'var(--c-primary)', flexShrink: 0 }} />
                   {poleNom ?? <span style={{ color: 'var(--c-t3)', fontWeight: 400 }}>Pôle non renseigné sur votre compte</span>}
                 </div>
-                {/* ── Champ Service (nouveau) ── */}
                 <div className="adm-form-field" style={{ marginTop: '12px' }}>
                   <label className="adm-label">Service *</label>
-
                   {servicesLoading ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: '13px', color: 'var(--c-t3)' }}>
                       <Loader2 size={13} style={{ animation: 'spin 0.7s linear infinite' }} /> Chargement des services…
@@ -355,13 +306,12 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                       value={selectedService}
                       onChange={e => {
                         setSelectedService(e.target.value);
-                        // Reset le médecin si on change de service
                         setForm(f => ({ ...f, medecinResponsableId: '' }));
                       }}
                       className="adm-input"
                     >
                       <option value="">Sélectionner un service</option>
-                      {services.map(s => (
+                      {(services as any[]).map(s => (
                         <option key={s.id} value={s.id}>{s.nom}</option>
                       ))}
                     </select>
@@ -376,7 +326,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
             </div>
           </div>
 
-          {/* ── Section Type de séjour ── */}
+          {/* ── Type de séjour ── */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
               <div className="adm-form-section-icon adm-fsi-blue"><Stethoscope size={13} /></div>
@@ -404,7 +354,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
             </div>
           </div>
 
-          {/* ── Section Médecin + Infos médicales ── */}
+          {/* ── Infos médicales ── */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
               <div className="adm-form-section-icon adm-fsi-blue"><Stethoscope size={13} /></div>
@@ -413,7 +363,6 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
             <div className="adm-form-section-body">
               <div className="adm-form-grid adm-form-grid-2">
 
-                {/* Médecin */}
                 <div className="adm-form-field">
                   <label className="adm-label">Médecin responsable *</label>
                   {medecinsLoading ? (
@@ -429,14 +378,13 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                       className="adm-input"
                     >
                       <option value="">Sélectionner un médecin</option>
-                      {medecins.map(m => (
+                      {(medecins as any[]).map(m => (
                         <option key={m.id} value={m.id}>Dr. {m.prenom} {m.nom}</option>
                       ))}
                     </select>
                   )}
                 </div>
 
-                {/* Mode d'entrée */}
                 <div className="adm-form-field">
                   <label className="adm-label">Mode d'entrée *</label>
                   <select
@@ -449,7 +397,6 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                   </select>
                 </div>
 
-                {/* Motif */}
                 <div className="adm-form-field" style={{ gridColumn: '1 / -1' }}>
                   <label className="adm-label">
                     {form.typeSejour === 'Consultation' ? 'Motif de consultation' : form.typeSejour === 'Urgences' ? 'Motif de venue aux urgences' : 'Motif d\'hospitalisation'} *
@@ -463,7 +410,6 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                   />
                 </div>
 
-                {/* Diagnostic CIM-10 */}
                 <div className="adm-form-field" style={{ gridColumn: '1 / -1' }}>
                   <label className="adm-label">
                     Code diagnostic CIM-10
@@ -477,7 +423,6 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                   />
                 </div>
 
-                {/* Date d'admission */}
                 <div className="adm-form-field">
                   <label className="adm-label">Date et heure d'admission *</label>
                   <input
@@ -488,7 +433,6 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                   />
                 </div>
 
-                {/* Numéro de séjour (auto) */}
                 <div className="adm-form-field">
                   <label className="adm-label">N° de séjour (auto-généré)</label>
                   <input
@@ -500,7 +444,6 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                   />
                 </div>
 
-                {/* Chambre / Lit — Hospitalisation et Urgences */}
                 {(form.typeSejour === 'Hospitalisation' || form.typeSejour === 'Urgences') && (<>
                   <div className="adm-form-field">
                     <label className="adm-label">
@@ -525,7 +468,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                               ? '— Aucune chambre disponible —'
                               : '— Choisir une chambre —'}
                         </option>
-                        {chambres.map(c => (
+                        {(chambres as any[]).map(c => (
                           <option key={c.id} value={c.numero}>
                             {c.numero}{c.designation ? ` — ${c.designation}` : ''}{c.etage ? ` (${c.etage})` : ''} · {c.capacite} lit{c.capacite > 1 ? 's' : ''}
                           </option>
@@ -553,7 +496,6 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
         {/* ── Sidebar ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-          {/* Patient sélectionné */}
           {selectedPatient && (
             <div style={{ background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-bd)', borderRadius: '10px', padding: '14px' }}>
               <p className="adm-sec-h" style={{ color: 'var(--c-accent)' }}>Patient sélectionné</p>
@@ -573,7 +515,6 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
             </div>
           )}
 
-          {/* Récapitulatif */}
           <div className="adm-card">
             <div className="adm-card-head">
               <p className="adm-card-title">Récapitulatif</p>
@@ -584,7 +525,7 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
                 { label: 'IPP',     value: selectedPatient?.numeroIpp ?? '—' },
                 { label: 'Type',    value: form.typeSejour || '—' },
                 { label: 'Pôle',    value: poleNom ?? '—' },
-                { label: 'Service', value: services.find(s => s.id === selectedService)?.nom ?? '—' },
+                { label: 'Service', value: (services as any[]).find(s => s.id === selectedService)?.nom ?? '—' },
                 { label: 'Médecin', value: selectedMedecin ? `Dr. ${selectedMedecin.prenom} ${selectedMedecin.nom}` : '—' },
                 { label: 'Mode',    value: form.modeEntree || '—' },
                 { label: 'CIM-10',  value: form.codeCIM10 ? form.codeCIM10.split(' — ')[0] : '—' },
@@ -602,7 +543,6 @@ const [selectedService, setSelectedService] = useState<string>(''); // id du ser
             </div>
           </div>
 
-          {/* Boutons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button
               onClick={handleSave}

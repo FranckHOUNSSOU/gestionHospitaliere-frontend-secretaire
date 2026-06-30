@@ -1,14 +1,14 @@
 import { createContext, useContext, useMemo } from 'react';
-import type { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import type { NavigationState, Page } from '../types/index';
 
-interface NavigationContextType {
-  nav: NavigationState;
-  navigate: (page: Page, id?: string, state?: Record<string, unknown>) => void;
-}
+type Page =
+  | 'dashboard' | 'patients' | 'patient-detail' | 'patient-new' | 'patient-edit'
+  | 'admissions' | 'admission-new' | 'admission-discharge'
+  | 'patient-file'
+  | 'appointments' | 'appointment-new'
+  | 'billing' | 'billing-detail' | 'billing-new' | 'reports';
 
-const NavigationContext = createContext<NavigationContextType | null>(null);
+const NavigationContext = createContext(null as any);
 
 const PAGE_PATHS: Record<Page, string | ((id: string) => string)> = {
   'dashboard':            '/',
@@ -16,10 +16,10 @@ const PAGE_PATHS: Record<Page, string | ((id: string) => string)> = {
   'patient-new':          '/patients/new',
   'patient-detail':       (id) => `/patients/${id}`,
   'patient-edit':         (id) => `/patients/${id}/edit`,
-  'patient-file':         (id) => `/patients/${id}/dossier`,       // ← nouveau
+  'patient-file':         (id) => `/patients/${id}/dossier`,
   'admissions':           '/admissions',
   'admission-new':        '/admissions/new',
-  'admission-discharge':  (id) => `/admissions/${id}/sortie`,      // ← nouveau
+  'admission-discharge':  (id) => `/admissions/${id}/sortie`,
   'appointments':         '/appointments',
   'appointment-new':      '/appointments/new',
   'billing':              '/billing',
@@ -28,25 +28,20 @@ const PAGE_PATHS: Record<Page, string | ((id: string) => string)> = {
   'reports':              '/reports',
 };
 
-function parsePage(pathname: string): NavigationState {
-  // patient-edit
+function parsePage(pathname: string): { page: Page; selectedId?: string } {
   const editMatch = pathname.match(/^\/patients\/([^/]+)\/edit$/);
   if (editMatch) return { page: 'patient-edit', selectedId: editMatch[1] };
 
-  // patient-file  (dossier)
   const fileMatch = pathname.match(/^\/patients\/([^/]+)\/dossier$/);
   if (fileMatch) return { page: 'patient-file', selectedId: fileMatch[1] };
 
-  // patient-detail
   const patientMatch = pathname.match(/^\/patients\/([^/]+)$/);
   if (patientMatch && patientMatch[1] !== 'new')
     return { page: 'patient-detail', selectedId: patientMatch[1] };
 
-  // admission-discharge  (sortie)
   const dischargeMatch = pathname.match(/^\/admissions\/([^/]+)\/sortie$/);
   if (dischargeMatch) return { page: 'admission-discharge', selectedId: dischargeMatch[1] };
 
-  // billing-detail
   const billingMatch = pathname.match(/^\/billing\/([^/]+)$/);
   if (billingMatch && billingMatch[1] !== 'new')
     return { page: 'billing-detail', selectedId: billingMatch[1] };
@@ -63,13 +58,13 @@ function parsePage(pathname: string): NavigationState {
   return { page: 'dashboard' };
 }
 
-export function NavigationProvider({ children }: { children: ReactNode }) {
+export function NavigationProvider({ children }: { children: any }) {
   const routerNavigate = useNavigate();
   const location = useLocation();
 
   const nav = useMemo(() => parsePage(location.pathname), [location.pathname]);
 
-  function navigate(page: Page, id?: string, state?: Record<string, unknown>) {
+  function navigate(page: Page, id?: string, state?: any) {
     const pathOrFn = PAGE_PATHS[page];
     const path = typeof pathOrFn === 'function' ? pathOrFn(id ?? '') : pathOrFn;
     routerNavigate(path, state ? { state } : undefined);

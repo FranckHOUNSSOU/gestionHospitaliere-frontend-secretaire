@@ -1,19 +1,17 @@
 import { createContext, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { ReactNode } from 'react';
-import type { AuthContextType, LoginFormData, LoginResponse, User } from '../types/auth.types';
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext(null as any);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(() => {
+export const AuthProvider = ({ children }: { children: any }) => {
+  const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user');
-    return saved ? (JSON.parse(saved) as User) : null;
+    return saved ? JSON.parse(saved) : null;
   });
 
   const navigate = useNavigate();
 
-  const login = async (data: LoginFormData) => {
+  const login = async (data: any) => {
     const res = await fetch(`${import.meta.env.VITE_API_URL ?? '/api'}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -23,14 +21,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!res.ok) {
       let message = 'Identifiants incorrects.';
       try {
-        const err = await res.json() as { message: string };
+        const err = await res.json();
         if (err.message) message = err.message;
       } catch { /* corps vide ou non-JSON */ }
       if (res.status === 502 || res.status === 503) message = 'Le serveur est temporairement indisponible. Réessayez dans un instant.';
       throw new Error(message);
     }
 
-    const json = (await res.json()) as LoginResponse;
+    const json = await res.json();
 
     if (json.user.role !== 'AGENT_ADMINISTRATIF') {
       const labels: Record<string, string> = {

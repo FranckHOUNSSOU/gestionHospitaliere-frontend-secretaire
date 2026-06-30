@@ -1,12 +1,11 @@
-﻿import { useState, useRef, useEffect } from 'react';
-import { Search, BedDouble, CheckCircle2, ArrowRight, FolderOpen, LogOut, AlertTriangle, X, Save, Loader2, MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Search, BedDouble, CheckCircle2, ArrowRight, FolderOpen, LogOut, AlertTriangle, MoreVertical, Edit2, Trash2 } from 'lucide-react';
 import Badge, { statusBadge } from '../../../components/ui/Badge/Badge';
 import { useNavigation } from '../../../context/NavigationContext';
-import type { Admission, AdmissionStatus } from '../../../types/index';
-import { patientsData, type Patient } from '../../../services/patients';
-import client from '../../../services/clients';
-
-// ── Couleurs avatars ──────────────────────────────────────────────────────────
+import { getPatient } from '../../../services/getPatient';
+import AdmissionListModalModifier from './AdmissionListModalModifier';
+import AdmissionListModalConfirmSuppr from './AdmissionListModalConfirmSuppr';
+import AdmissionListModalSortie from './AdmissionListModalSortie';
 
 const AVATAR_COLORS = [
   { from: '#60a5fa', to: '#06b6d4' },
@@ -23,9 +22,7 @@ function getAvatarGradient(id: string) {
   return `linear-gradient(135deg, ${c.from}, ${c.to})`;
 }
 
-// ── Statut dérivé ─────────────────────────────────────────────────────────────
-
-function deriveStatus(sejours: NonNullable<Patient['sejours']>): AdmissionStatus {
+function deriveStatus(sejours: any[]): string {
   if (sejours.length === 0) return 'active';
   const dernierSejour = sejours[sejours.length - 1];
   if (!dernierSejour.dateSortie) return 'active';
@@ -34,7 +31,7 @@ function deriveStatus(sejours: NonNullable<Patient['sejours']>): AdmissionStatus
   return 'discharged';
 }
 
-function toRow(p: Patient): Admission {
+function toRow(p: any): any {
   const sejours    = p.sejours ?? [];
   const dernier    = sejours[sejours.length - 1];
   const dernierMvt = dernier?.mouvements?.[dernier.mouvements.length - 1];
@@ -48,234 +45,51 @@ function toRow(p: Patient): Admission {
     department:            dernierMvt?.serviceArrivee ?? dernier?.modeEntree ?? '—',
     room:                  dernierMvt?.numeroChambre  ?? '—',
     bed:                   dernierMvt?.numeroLit      ?? '—',
-    doctorId:              dernier?.medecinResponsable?.user ? '' : '',
     doctorName:            dernier?.medecinResponsable?.user
       ? `Dr. ${dernier.medecinResponsable.user.prenom} ${dernier.medecinResponsable.user.nom}`
       : '—',
     reason:                dernier?.motifHospitalisation ?? dernier?.modeEntree ?? '—',
     status:                deriveStatus(sejours),
-    typeSejour:            (dernier as any)?.typeSejour ?? undefined,
+    typeSejour:            dernier?.typeSejour ?? undefined,
   };
 }
 
-// ── Stats ─────────────────────────────────────────────────────────────────────
-
-function statsOf(rows: Admission[]) {
+function statsOf(rows: any[]) {
   const moisCourant = new Date().toISOString().slice(0, 7);
   return {
-    actifs:     rows.filter(r => r.status === 'active').length,
-    transferes: rows.filter(r => r.status === 'transferred').length,
+    actifs:       rows.filter(r => r.status === 'active').length,
+    transferes:   rows.filter(r => r.status === 'transferred').length,
     Hospitalises: rows.filter(r => r.status === 'hospitalised').length,
-    sortisMois: rows.filter(r =>
+    sortisMois:   rows.filter(r =>
       r.status === 'discharged' &&
       r.expectedDischargeDate?.slice(0, 7) === moisCourant,
     ).length,
   };
 }
 
-// ── Composant ─────────────────────────────────────────────────────────────────
-
-
-const MODES_ENTREE  = ['Urgences', 'Programmé', 'Transfert', 'Naissance', 'Autre'] as const;
-const MODES_SORTIE  = ['Domicile', 'Transfert', 'Décès', 'Fugue', 'Autre'] as const;
-
-function ModalModifier({ adm, onClose, onDone }: {
-  adm: Admission; onClose: () => void; onDone: () => void;
-}) {
-  const [form, setForm] = useState({
-    dateAdmission:        new Date(adm.admissionDate).toISOString().slice(0, 16),
-    modeEntree:           '',
-    motifHospitalisation: adm.reason === '—' ? '' : adm.reason,
-  });
-  const [saving, setSaving] = useState(false);
-  const [err, setErr]       = useState<string | null>(null);
-
-  async function save() {
-    if (!form.motifHospitalisation.trim()) { setErr('Le motif est obligatoire.'); return; }
-    setSaving(true); setErr(null);
-    try {
-      await client.patch(`/sejours/${adm.id}`, {
-        dateAdmission:        new Date(form.dateAdmission).toISOString(),
-        ...(form.modeEntree && { modeEntree: form.modeEntree }),
-        motifHospitalisation: form.motifHospitalisation.trim(),
-      });
-      onDone();
-    } catch (e: any) { setErr(e?.message ?? 'Erreur.'); }
-    finally { setSaving(false); }
-  }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: 'var(--c-bg)', borderRadius: 12, width: '100%', maxWidth: 480, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--c-bdr)' }}>
-          <div>
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: 'var(--c-t0)' }}>Modifier l&#39;admission</p>
-            <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--c-t3)' }}>{adm.patientName}</p>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-t3)', display: 'flex' }}><X size={18} /></button>
-        </div>
-        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {err && <div className="adm-alert adm-alert-error">{err}</div>}
-          <div className="adm-form-field">
-            <label className="adm-label">Date et heure d&#39;admission *</label>
-            <input type="datetime-local" className="adm-input" value={form.dateAdmission}
-              onChange={e => setForm(f => ({ ...f, dateAdmission: e.target.value }))} />
-          </div>
-          <div className="adm-form-field">
-            <label className="adm-label">Mode d&#39;entrée</label>
-            <select className="adm-input" value={form.modeEntree}
-              onChange={e => setForm(f => ({ ...f, modeEntree: e.target.value }))}>
-              <option value="">Inchangé</option>
-              {MODES_ENTREE.map(m => <option key={m}>{m}</option>)}
-            </select>
-          </div>
-          <div className="adm-form-field">
-            <label className="adm-label">Motif *</label>
-            <input className="adm-input" value={form.motifHospitalisation}
-              onChange={e => setForm(f => ({ ...f, motifHospitalisation: e.target.value }))}
-              placeholder="Motif" />
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', padding: '12px 20px', borderTop: '1px solid var(--c-bdr)' }}>
-          <button onClick={onClose} className="adm-btn" style={{ height: 34 }}>Annuler</button>
-          <button onClick={save} disabled={saving} className="adm-btn adm-btn-primary" style={{ height: 34, gap: 6 }}>
-            {saving ? <><Loader2 size={13} style={{ animation: 'spin 0.7s linear infinite' }} /> Enregistrement...</> : <><Save size={13} /> Enregistrer</>}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ModalConfirmSuppr({ adm, onClose, onDone }: {
-  adm: Admission; onClose: () => void; onDone: () => void;
-}) {
-  const [deleting, setDeleting] = useState(false);
-  const [err, setErr]           = useState<string | null>(null);
-
-  async function confirm() {
-    setDeleting(true); setErr(null);
-    try {
-      await client.delete(`/sejours/${adm.id}`);
-      onDone();
-    } catch (e: any) { setErr(e?.message ?? 'Erreur.'); }
-    finally { setDeleting(false); }
-  }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: 'var(--c-bg)', borderRadius: 12, width: '100%', maxWidth: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', padding: '24px 20px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 16 }}>
-          <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-            <Trash2 size={20} color="#dc2626" />
-          </div>
-          <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: 'var(--c-t0)' }}>Supprimer cette admission ?</p>
-          <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--c-t3)' }}>
-            {adm.patientName} — cette action est irreversible.
-          </p>
-        </div>
-        {err && <div className="adm-alert adm-alert-error" style={{ marginBottom: 12 }}>{err}</div>}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onClose} className="adm-btn" style={{ flex: 1, height: 36, justifyContent: 'center' }}>Annuler</button>
-          <button onClick={confirm} disabled={deleting} className="adm-btn" style={{ flex: 1, height: 36, justifyContent: 'center', background: '#dc2626', color: '#fff', border: 'none', gap: 6 }}>
-            {deleting ? <><Loader2 size={13} style={{ animation: 'spin 0.7s linear infinite' }} /> Suppression...</> : <><Trash2 size={13} /> Supprimer</>}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ModalSortie({ sejourId, patientName, onClose, onDone }: {
-  sejourId: string; patientName: string; onClose: () => void; onDone: () => void;
-}) {
-  const now = new Date(); now.setSeconds(0, 0);
-  const [form, setForm]     = useState({ dateSortie: now.toISOString().slice(0, 16), modeSortie: '' });
-  const [saving, setSaving] = useState(false);
-  const [err, setErr]       = useState<string | null>(null);
-
-  async function save() {
-    if (!form.modeSortie) { setErr('Sélectionnez un type de sortie.'); return; }
-    setSaving(true); setErr(null);
-    try {
-      await client.patch(`/sejours/${sejourId}/cloturer`, {
-        dateSortie: new Date(form.dateSortie).toISOString(),
-        modeSortie: form.modeSortie,
-      });
-      onDone();
-    } catch (e: any) { setErr(e?.message ?? 'Erreur.'); }
-    finally { setSaving(false); }
-  }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: 'var(--c-bg)', borderRadius: 12, width: '100%', maxWidth: 440, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--c-bdr)' }}>
-          <div>
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: 'var(--c-t0)' }}>Enregistrer la sortie</p>
-            <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--c-t3)' }}>{patientName}</p>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-t3)', display: 'flex' }}><X size={18} /></button>
-        </div>
-        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {err && <div className="adm-alert adm-alert-error">{err}</div>}
-          <div className="adm-form-field">
-            <label className="adm-label">Date et heure de sortie *</label>
-            <input type="datetime-local" className="adm-input" value={form.dateSortie}
-              onChange={e => setForm(f => ({ ...f, dateSortie: e.target.value }))} />
-          </div>
-          <div className="adm-form-field">
-            <label className="adm-label">Type de sortie *</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-              {MODES_SORTIE.map(m => (
-                <button key={m} type="button" onClick={() => setForm(f => ({ ...f, modeSortie: m }))}
-                  style={{ padding: '8px 6px', borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 600, textAlign: 'center',
-                    border: form.modeSortie === m ? '2px solid var(--c-primary)' : '1px solid var(--c-bdr)',
-                    background: form.modeSortie === m ? 'var(--c-accent-bg)' : 'var(--c-surf2)',
-                    color: form.modeSortie === m ? 'var(--c-primary)' : 'var(--c-t1)',
-                  }}>
-                  {m}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', padding: '12px 20px', borderTop: '1px solid var(--c-bdr)' }}>
-          <button onClick={onClose} className="adm-btn" style={{ height: 34 }}>Annuler</button>
-          <button onClick={save} disabled={saving} className="adm-btn adm-btn-primary" style={{ height: 34, gap: 6 }}>
-            {saving ? <><Loader2 size={13} style={{ animation: 'spin 0.7s linear infinite' }} /> Enregistrement…</> : <><Save size={13} /> Confirmer la sortie</>}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 export default function AdmissionList() {
   const { navigate } = useNavigation();
-  const [sortieModal,    setSortieModal]    = useState<{ sejourId: string; patientName: string } | null>(null);
-  const [modifierModal,  setModifierModal]  = useState<Admission | null>(null);
-  const [supprModal,     setSupprModal]     = useState<Admission | null>(null);
-  const [menuOuvert,     setMenuOuvert]     = useState<string | null>(null);
+  const [sortieModal,   setSortieModal]   = useState(null as any);
+  const [modifierModal, setModifierModal] = useState(null as any);
+  const [supprModal,    setSupprModal]    = useState(null as any);
+  const [menuOuvert,    setMenuOuvert]    = useState(null as any);
 
-  const [allRows,  setAllRows]  = useState<Admission[]>([]);
+  const [allRows,  setAllRows]  = useState([]);
   const [initLoad, setInitLoad] = useState(true);
-  const [initErr,  setInitErr]  = useState<string | null>(null);
+  const [initErr,  setInitErr]  = useState(null as any);
 
   const [search,       setSearch]       = useState('');
-  const [statusFilter, setStatusFilter] = useState<AdmissionStatus | 'all'>('all');
-  const [searchRows,   setSearchRows]   = useState<Admission[]>([]);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchRows,   setSearchRows]   = useState([]);
   const [searching,    setSearching]    = useState(false);
   const [searched,     setSearched]     = useState(false);
-  const [searchErr,    setSearchErr]    = useState<string | null>(null);
+  const [searchErr,    setSearchErr]    = useState(null as any);
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debounceRef = useRef(null as any);
 
   useEffect(() => {
-    patientsData.findAll()
-      .then(patients => setAllRows(patients.map(toRow)))
+    getPatient.findAll()
+      .then((patients: any[]) => setAllRows(patients.map(toRow) as any))
       .catch(() => setInitErr('Impossible de charger la liste des patients.'))
       .finally(() => setInitLoad(false));
   }, []);
@@ -285,11 +99,11 @@ export default function AdmissionList() {
     setSearching(true);
     setSearchErr(null);
     try {
-      const patients = await patientsData.rechercher(q.trim());
-      setSearchRows(patients.map(toRow));
+      const patients = await getPatient.rechercher(q.trim());
+      setSearchRows((patients as any[]).map(toRow) as any);
       setSearched(true);
-    } catch (err: unknown) {
-      setSearchErr((err as Error)?.message ?? 'Erreur lors de la recherche.');
+    } catch (err: any) {
+      setSearchErr(err?.message ?? 'Erreur lors de la recherche.');
     } finally {
       setSearching(false);
     }
@@ -307,27 +121,26 @@ export default function AdmissionList() {
     }
   };
 
-  const baseRows = searched ? searchRows : allRows;
-
-  const visibleRows = baseRows.filter(r => {
+  const baseRows    = searched ? searchRows : allRows;
+  const visibleRows = (baseRows as any[]).filter((r: any) => {
     if (statusFilter === 'all') return searched ? true : r.status !== 'discharged';
     return r.status === statusFilter;
   });
-
   const stats = statsOf(allRows);
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  function refreshAll() {
+    getPatient.findAll().then((ps: any[]) => setAllRows(ps.map(toRow) as any));
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-      {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
         {[
-          { label: 'Patients actifs', value: stats.actifs,     icon: <BedDouble size={16} />,    kpi: 'adm-kpi-blue'   },
-          { label: 'Transférés',      value: stats.transferes, icon: <ArrowRight size={16} />,   kpi: 'adm-kpi-orange' },
-          { label: 'Hospitalisés',    value: stats.Hospitalises, icon: <ArrowRight size={16} />,     kpi: 'adm-kpi-purple' },
-          { label: 'Sorties ce mois', value: stats.sortisMois, icon: <CheckCircle2 size={16} />, kpi: 'adm-kpi-green'  },
+          { label: 'Patients actifs', value: stats.actifs,       icon: <BedDouble size={16} />,    kpi: 'adm-kpi-blue'   },
+          { label: 'Transférés',      value: stats.transferes,   icon: <ArrowRight size={16} />,   kpi: 'adm-kpi-orange' },
+          { label: 'Hospitalisés',    value: stats.Hospitalises, icon: <ArrowRight size={16} />,   kpi: 'adm-kpi-purple' },
+          { label: 'Sorties ce mois', value: stats.sortisMois,   icon: <CheckCircle2 size={16} />, kpi: 'adm-kpi-green'  },
         ].map(s => (
           <div key={s.label} className={`adm-kpi ${s.kpi}`}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -339,10 +152,7 @@ export default function AdmissionList() {
         ))}
       </div>
 
-      {/* Table card */}
       <div className="adm-card">
-
-        {/* Filters */}
         <div className="adm-card-head" style={{ gap: '10px', flexWrap: 'wrap', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', gap: '8px', flex: 1, flexWrap: 'wrap' }}>
             <div className="adm-search" style={{ flex: 1, minWidth: '200px', maxWidth: '900px' }}>
@@ -362,7 +172,7 @@ export default function AdmissionList() {
             </div>
             <select
               value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value as AdmissionStatus | 'all')}
+              onChange={e => setStatusFilter(e.target.value)}
               className="adm-input"
               style={{ minWidth: '200px', padding: '6px 10px' }}
             >
@@ -375,14 +185,12 @@ export default function AdmissionList() {
           </div>
         </div>
 
-        {/* Erreurs */}
         {(initErr || searchErr) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', color: '#ef4444', fontSize: '13px' }}>
             <AlertTriangle size={14} /> {initErr ?? searchErr}
           </div>
         )}
 
-        {/* Loading */}
         {initLoad && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px', gap: '10px', color: 'var(--c-t3)', fontSize: '13px' }}>
             <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid var(--c-bdr)', borderTopColor: 'var(--c-primary)', animation: 'spin 0.7s linear infinite' }} />
@@ -390,7 +198,6 @@ export default function AdmissionList() {
           </div>
         )}
 
-        {/* Tableau */}
         {!initLoad && (
           <div style={{ overflowX: 'auto' }}>
             <table className="adm-table">
@@ -411,10 +218,10 @@ export default function AdmissionList() {
                 {visibleRows.length === 0 ? (
                   <tr>
                     <td colSpan={9} style={{ textAlign: 'center', padding: '32px', color: 'var(--c-t3)' }}>
-                      {searched ? 'Aucun résultat pour cette recherche.' : 'Aucun patient actif hospiitalisé ou transféré.'}
+                      {searched ? 'Aucun résultat pour cette recherche.' : 'Aucun patient actif hospitalisé ou transféré.'}
                     </td>
                   </tr>
-                ) : visibleRows.map((adm, idx) => {
+                ) : visibleRows.map((adm: any, idx: number) => {
                   const { variant, label } = statusBadge(adm.status);
                   const days = adm.status === 'active'
                     ? Math.floor((Date.now() - new Date(adm.admissionDate).getTime()) / 86_400_000)
@@ -432,7 +239,7 @@ export default function AdmissionList() {
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <div className="adm-avatar-sm" style={{ background: getAvatarGradient(adm.patientId) }}>
-                            {adm.patientName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                            {adm.patientName.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                           </div>
                           <div>
                             <button onClick={() => navigate('patient-detail', adm.patientId)} className="adm-link-btn">
@@ -493,7 +300,9 @@ export default function AdmissionList() {
                       </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, position: 'relative' }}>
-                          <button onClick={() => navigate('patient-file', adm.patientId, adm.status === 'discharged' ? { synthese: true } : undefined)} title={adm.status === 'discharged' ? 'Voir la synthèse' : 'Voir le dossier'}
+                          <button
+                            onClick={() => navigate('patient-file', adm.patientId, adm.status === 'discharged' ? { synthese: true } : undefined)}
+                            title={adm.status === 'discharged' ? 'Voir la synthèse' : 'Voir le dossier'}
                             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--c-bdr)', background: 'var(--c-bg2)', color: 'var(--c-primary)', cursor: 'pointer' }}>
                             <FolderOpen size={13} />
                           </button>
@@ -503,29 +312,31 @@ export default function AdmissionList() {
                               <LogOut size={13} />
                             </button>
                           )}
-                          {adm.status !== 'discharged' && <div style={{ position: 'relative' }}>
-                            <button onClick={() => setMenuOuvert(menuOuvert === adm.id ? null : adm.id)} title="Plus d'actions"
-                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--c-bdr)', background: 'var(--c-bg2)', color: 'var(--c-t2)', cursor: 'pointer' }}>
-                              <MoreVertical size={13} />
-                            </button>
-                            {menuOuvert === adm.id && (
-                              <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, zIndex: 100, background: 'var(--c-bg)', border: '1px solid var(--c-bdr)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', minWidth: 150, overflow: 'hidden' }}
-                                onMouseLeave={() => setMenuOuvert(null)}>
-                                <button onClick={() => { setMenuOuvert(null); setModifierModal(adm); }}
-                                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--c-t1)' }}
-                                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--c-surf2)')}
-                                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
-                                  <Edit2 size={12} /> Modifier
-                                </button>
-                                <button onClick={() => { setMenuOuvert(null); setSupprModal(adm); }}
-                                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#dc2626' }}
-                                  onMouseEnter={e => (e.currentTarget.style.background = '#fee2e2')}
-                                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
-                                  <Trash2 size={12} /> Supprimer
-                                </button>
-                              </div>
-                            )}
-                          </div>}
+                          {adm.status !== 'discharged' && (
+                            <div style={{ position: 'relative' }}>
+                              <button onClick={() => setMenuOuvert(menuOuvert === adm.id ? null : adm.id)} title="Plus d'actions"
+                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--c-bdr)', background: 'var(--c-bg2)', color: 'var(--c-t2)', cursor: 'pointer' }}>
+                                <MoreVertical size={13} />
+                              </button>
+                              {menuOuvert === adm.id && (
+                                <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, zIndex: 100, background: 'var(--c-bg)', border: '1px solid var(--c-bdr)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', minWidth: 150, overflow: 'hidden' }}
+                                  onMouseLeave={() => setMenuOuvert(null)}>
+                                  <button onClick={() => { setMenuOuvert(null); setModifierModal(adm); }}
+                                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--c-t1)' }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--c-surf2)')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+                                    <Edit2 size={12} /> Modifier
+                                  </button>
+                                  <button onClick={() => { setMenuOuvert(null); setSupprModal(adm); }}
+                                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#dc2626' }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = '#fee2e2')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+                                    <Trash2 size={12} /> Supprimer
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -536,29 +347,27 @@ export default function AdmissionList() {
           </div>
         )}
       </div>
+
       {sortieModal && (
-        <ModalSortie
+        <AdmissionListModalSortie
           sejourId={sortieModal.sejourId}
           patientName={sortieModal.patientName}
           onClose={() => setSortieModal(null)}
-          onDone={() => {
-            setSortieModal(null);
-            patientsData.findAll().then(ps => setAllRows(ps.map(toRow)));
-          }}
+          onDone={() => { setSortieModal(null); refreshAll(); }}
         />
       )}
       {modifierModal && (
-        <ModalModifier
+        <AdmissionListModalModifier
           adm={modifierModal}
           onClose={() => setModifierModal(null)}
-          onDone={() => { setModifierModal(null); patientsData.findAll().then(ps => setAllRows(ps.map(toRow))); }}
+          onDone={() => { setModifierModal(null); refreshAll(); }}
         />
       )}
       {supprModal && (
-        <ModalConfirmSuppr
+        <AdmissionListModalConfirmSuppr
           adm={supprModal}
           onClose={() => setSupprModal(null)}
-          onDone={() => { setSupprModal(null); patientsData.findAll().then(ps => setAllRows(ps.map(toRow))); }}
+          onDone={() => { setSupprModal(null); refreshAll(); }}
         />
       )}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>

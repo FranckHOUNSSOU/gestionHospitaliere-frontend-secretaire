@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import type { SyntheticEvent } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import type { LoginFormData } from '../../../types/auth.types';
 import { Container, Row, Col, Form, Button, Alert, Spinner } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './LoginPage.css';
@@ -10,7 +8,7 @@ import loginHospital from '../../../assets/login-hospital.jpg';
 export default function LoginPage() {
   const { login } = useAuth();
 
-  const [formData, setFormData] = useState<LoginFormData>({
+  const [formData, setFormData] = useState({
     email: '',
     password: '',
     rememberMe: true,
@@ -18,7 +16,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: SyntheticEvent) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     setError('');
     if (!formData.email || !formData.password) {
@@ -28,8 +26,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(formData);
-    } catch (err: unknown) {
-      const msg = (err as Error)?.message ?? '';
+    } catch (err: any) {
+      const msg = err?.message ?? '';
       if (!msg || msg === 'Failed to fetch' || msg.toLowerCase().includes('networkerror')) {
         setError('Impossible de contacter le serveur. Vérifiez que le backend est démarré.');
       } else {

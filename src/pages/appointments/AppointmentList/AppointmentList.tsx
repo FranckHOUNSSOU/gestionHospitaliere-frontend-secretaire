@@ -4,12 +4,17 @@ import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { Plus, List, CalendarDays, Search, ChevronLeft, ChevronRight, Clock, MoreVertical, X, Save } from 'lucide-react';
+import { Plus, List, CalendarDays, Search, Clock, MoreVertical } from 'lucide-react';
 import Badge, { statusBadge } from '../../../components/ui/Badge/Badge';
-import { getRendezVous, updateStatutRendezVous, updateRendezVous, deleteRendezVous } from '../../../services/appointmentService';
+import { getRendezVous } from '../../../services/getRendezVous';
+import { patchRendezVous } from '../../../services/patchRendezVous';
+import { deleteRendezVous } from '../../../services/deleteRendezVous';
 import { useNavigation } from '../../../context/NavigationContext';
-import type { AppointmentStatus, Appointment } from '../../../types/index';
+import AppointmentEventCard from './AppointmentEventCard';
+import AppointmentToolbar from './AppointmentToolbar';
+import AppointmentEditModal from './AppointmentEditModal';
 
+type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
 type StatusBackend = 'Confirme' | 'Annule' | 'Effectue' | 'Programme';
 
 const BACKEND_TO_FRONTEND: Record<StatusBackend, AppointmentStatus> = {
@@ -22,13 +27,6 @@ const STATUS_ACTIONS: { value: StatusBackend; label: string; color: string }[] =
   { value: 'Effectue',  label: 'Terminé',   color: '#059669' },
   { value: 'Annule',    label: 'Annuler',   color: '#dc2626' },
 ];
-
-const TIME_SLOTS = [
-  '07:30','08:00','08:30','09:00','09:30','10:00','10:30','11:00',
-  '11:30','12:00','14:00','14:30','15:00','15:30','16:00','16:30','17:00',
-];
-
-const APPOINTMENT_TYPES = ['Consultation','Suivi','Contrôle','Examen','Pré-opératoire','Urgence','Vaccination','Autre'];
 
 const localizer = dateFnsLocalizer({
   format, parse,
@@ -60,9 +58,7 @@ const LEGEND: { status: AppointmentStatus; label: string }[] = [
   { status: 'no_show',   label: 'Non présenté' },
 ];
 
-type CalEvent = { id: string; title: string; start: Date; end: Date; resource: Appointment };
-
-function toEvent(appt: Appointment): CalEvent {
+function toEvent(appt: any) {
   const [y, m, d] = appt.date.split('-').map(Number);
   const [h, min]  = appt.time.split(':').map(Number);
   const start = new Date(y, m - 1, d, h, min);
@@ -70,179 +66,30 @@ function toEvent(appt: Appointment): CalEvent {
   return { id: appt.id, title: `${appt.patientName} — ${appt.doctorName}`, start, end, resource: appt };
 }
 
-function EventCard({ event }: { event: CalEvent }) {
-  const a = event.resource;
-  return (
-    <div style={{ lineHeight: 1.3, overflow: 'hidden' }}>
-      <div style={{ fontWeight: 600, fontSize: '10.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {a.time} · {a.patientName}
-      </div>
-      <div style={{ fontSize: '9.5px', opacity: 0.85, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {a.type} · {a.doctorName}
-      </div>
-    </div>
-  );
-}
-
-type RbcToolbarProps = { label: string; view: string; views: string[]; onNavigate: (a: string) => void; onView: (v: string) => void };
-const VIEW_LABELS: Record<string, string> = { month: 'Mois', week: 'Semaine', day: 'Jour', agenda: 'Agenda' };
-
-function CustomToolbar({ label, view, views, onNavigate, onView }: RbcToolbarProps) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--c-bdr)', gap: 12, flexWrap: 'wrap' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <button className="adm-btn" onClick={() => onNavigate('TODAY')} style={{ height: 30, fontSize: 12 }}>Aujourd'hui</button>
-        <button className="adm-icon-btn" style={{ width: 30, height: 30 }} onClick={() => onNavigate('PREV')}><ChevronLeft size={14} /></button>
-        <button className="adm-icon-btn" style={{ width: 30, height: 30 }} onClick={() => onNavigate('NEXT')}><ChevronRight size={14} /></button>
-        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--c-t0)', marginLeft: 4 }}>{label}</span>
-      </div>
-      <div className="adm-view-toggle">
-        {views.map((v) => (
-          <button key={v} className={`adm-view-btn${view === v ? ' active' : ''}`} onClick={() => onView(v)}>{VIEW_LABELS[v] ?? v}</button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ── Modal de modification ─────────────────────────────────────────────────── */
-interface EditModalProps {
-  appt: Appointment;
-  onClose: () => void;
-  onSaved: (updated: Appointment) => void;
-}
-
-function EditModal({ appt, onClose, onSaved }: EditModalProps) {
-  const [form, setForm] = useState({
-    date:     appt.date,
-    time:     appt.time,
-    duration: String(appt.duration),
-    type:     appt.type,
-    notes:    appt.notes ?? '',
-  });
-  const [saving, setSaving] = useState(false);
-  const [error,  setError]  = useState<string | null>(null);
-
-  function handleChange(field: string, value: string) {
-    setForm(prev => ({ ...prev, [field]: value }));
-  }
-
-  async function handleSave() {
-    if (!form.date || !form.time) { setError('Date et heure obligatoires.'); return; }
-    setSaving(true); setError(null);
-    try {
-      await updateRendezVous(appt.id, {
-        dateHeure:    `${form.date}T${form.time}:00`,
-        dureeMinutes: Number(form.duration),
-        type:         form.type,
-        motif:        form.notes || undefined,
-      });
-      onSaved({ ...appt, date: form.date, time: form.time, duration: Number(form.duration), type: form.type, notes: form.notes || undefined });
-    } catch (e: any) {
-      setError(e?.message ?? 'Erreur lors de la modification.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.45)' }}
-         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: 'var(--c-bg)', borderRadius: 12, width: '100%', maxWidth: 520, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--c-bdr)' }}>
-          <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: 'var(--c-t0)' }}>Modifier le rendez-vous</p>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-t3)', display: 'flex' }}><X size={18} /></button>
-        </div>
-        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Infos non modifiables */}
-          <div style={{ background: 'var(--c-surf2)', borderRadius: 8, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {[{ k: 'Patient', v: appt.patientName }, { k: 'Médecin', v: appt.doctorName }, { k: 'Service', v: appt.department }].map(({ k, v }) => (
-              <div key={k} style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
-                <span style={{ fontSize: 11, color: 'var(--c-t3)', minWidth: 60 }}>{k}</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-t1)' }}>{v || '—'}</span>
-              </div>
-            ))}
-          </div>
-          {error && <div className="adm-alert adm-alert-error">{error}</div>}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div className="adm-form-field">
-              <label className="adm-label">Date *</label>
-              <input type="date" className="adm-input" value={form.date} onChange={e => handleChange('date', e.target.value)} />
-            </div>
-            <div className="adm-form-field">
-              <label className="adm-label">Durée</label>
-              <select className="adm-input" value={form.duration} onChange={e => handleChange('duration', e.target.value)}>
-                <option value="15">15 min</option>
-                <option value="30">30 min</option>
-                <option value="45">45 min</option>
-                <option value="60">1 heure</option>
-                <option value="90">1h30</option>
-                <option value="120">2 heures</option>
-              </select>
-            </div>
-          </div>
-          <div className="adm-form-field">
-            <label className="adm-label">Créneau horaire *</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 5 }}>
-              {TIME_SLOTS.map((t) => (
-                <button key={t} type="button" onClick={() => handleChange('time', t)}
-                  className={form.time === t ? 'adm-btn adm-btn-primary' : 'adm-btn'}
-                  style={{ justifyContent: 'center', height: 28, fontSize: 11 }}>{t}</button>
-              ))}
-            </div>
-          </div>
-          <div className="adm-form-field">
-            <label className="adm-label">Type de consultation</label>
-            <select className="adm-input" value={form.type} onChange={e => handleChange('type', e.target.value)}>
-              {APPOINTMENT_TYPES.map(t => <option key={t}>{t}</option>)}
-            </select>
-          </div>
-          <div className="adm-form-field">
-            <label className="adm-label">Notes / Motif</label>
-            <textarea className="adm-input" rows={2} value={form.notes}
-              onChange={e => handleChange('notes', e.target.value)} placeholder="Motif de consultation…" />
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, padding: '12px 20px', borderTop: '1px solid var(--c-bdr)', justifyContent: 'flex-end' }}>
-          <button onClick={onClose} className="adm-btn" style={{ height: 36 }}>Annuler</button>
-          <button onClick={handleSave} disabled={saving} className="adm-btn adm-btn-primary" style={{ height: 36, gap: 6 }}>
-            <Save size={13} /> {saving ? 'Enregistrement…' : 'Enregistrer'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   COMPOSANT PRINCIPAL
-   ═══════════════════════════════════════════════════════════════ */
 export default function AppointmentList() {
   const { navigate } = useNavigation();
-  const [view, setView]         = useState<'list' | 'calendar'>('calendar');
-  const [calView, setCalView]   = useState<string>(Views.MONTH);
+  const [view, setView]         = useState('calendar' as any);
+  const [calView, setCalView]   = useState(Views.MONTH as any);
   const [calDate, setCalDate]   = useState(new Date());
   const [search, setSearch]     = useState('');
-  const [statusFilter, setStatusFilter] = useState<AppointmentStatus | 'all'>('all');
-  const [selected, setSelected] = useState<Appointment | null>(null);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [loading,    setLoading]    = useState(false);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [editingAppt, setEditingAppt] = useState<Appointment | null>(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selected, setSelected] = useState(null as any);
+  const [appointments, setAppointments] = useState([]);
+  const [loading,      setLoading]      = useState(false);
+  const [updatingId,   setUpdatingId]   = useState(null as any);
+  const [editingAppt,  setEditingAppt]  = useState(null as any);
 
-  // Popovers en position fixe pour éviter le clipping du overflow de la table
-  const [statusPopover, setStatusPopover] = useState<{ id: string; top: number; left: number } | null>(null);
-  const [menuPopover,   setMenuPopover]   = useState<{ id: string; top: number; right: number } | null>(null);
+  const [statusPopover, setStatusPopover] = useState(null as any);
+  const [menuPopover,   setMenuPopover]   = useState(null as any);
 
   useEffect(() => {
     setLoading(true);
-    getRendezVous()
-      .then(({ data }) => setAppointments(data))
+    getRendezVous.getRendezVous()
+      .then(data => setAppointments(data))
       .catch(() => setAppointments([]))
       .finally(() => setLoading(false));
   }, []);
 
-  // Fermer les popovers au clic extérieur
   useEffect(() => {
     function handleClick() { setStatusPopover(null); setMenuPopover(null); }
     document.addEventListener('mousedown', handleClick);
@@ -251,7 +98,7 @@ export default function AppointmentList() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return [...appointments]
+    return [...(appointments as any[])]
       .filter((a) => {
         const matchSearch = a.patientName.toLowerCase().includes(q) || a.doctorName.toLowerCase().includes(q) || a.department.toLowerCase().includes(q);
         const matchStatus = statusFilter === 'all' || a.status === statusFilter;
@@ -260,10 +107,10 @@ export default function AppointmentList() {
       .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
   }, [search, statusFilter, appointments]);
 
-  const events = useMemo(() => appointments.map(toEvent), [appointments]);
+  const events = useMemo(() => (appointments as any[]).map(toEvent), [appointments]);
 
-  const eventPropGetter = useCallback((event: CalEvent) => {
-    const s = STATUS_STYLE[event.resource.status] ?? STATUS_STYLE.scheduled;
+  const eventPropGetter = useCallback((event: any) => {
+    const s = STATUS_STYLE[event.resource.status as AppointmentStatus] ?? STATUS_STYLE.scheduled;
     return { style: { backgroundColor: s.background, borderColor: s.border, borderRadius: '5px', color: '#fff', border: `1px solid ${s.border}`, padding: '2px 5px' } };
   }, []);
 
@@ -276,10 +123,10 @@ export default function AppointmentList() {
   const handleStatusChange = useCallback(async (id: string, statut: StatusBackend) => {
     setUpdatingId(id); setStatusPopover(null);
     try {
-      await updateStatutRendezVous(id, statut);
+      await patchRendezVous.updateStatut(id, statut);
       const newStatus = BACKEND_TO_FRONTEND[statut];
-      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
-      setSelected(prev => prev?.id === id ? { ...prev, status: newStatus } : prev);
+      setAppointments(prev => (prev as any[]).map(a => a.id === id ? { ...a, status: newStatus } : a) as any);
+      setSelected((prev: any) => prev?.id === id ? { ...prev, status: newStatus } : prev);
     } catch { /* silent */ } finally { setUpdatingId(null); }
   }, []);
 
@@ -287,20 +134,20 @@ export default function AppointmentList() {
     if (!window.confirm('Supprimer ce rendez-vous ? Cette action est irréversible.')) return;
     setMenuPopover(null);
     try {
-      await deleteRendezVous(id);
-      setAppointments(prev => prev.filter(a => a.id !== id));
-      setSelected(prev => prev?.id === id ? null : prev);
+      await deleteRendezVous.deleteRendezVous(id);
+      setAppointments(prev => (prev as any[]).filter(a => a.id !== id) as any);
+      setSelected((prev: any) => prev?.id === id ? null : prev);
     } catch { /* silent */ }
   }, []);
 
-  const handleSaved = useCallback((updated: Appointment) => {
-    setAppointments(prev => prev.map(a => a.id === updated.id ? updated : a));
-    setSelected(prev => prev?.id === updated.id ? updated : prev);
+  const handleSaved = useCallback((updated: any) => {
+    setAppointments(prev => (prev as any[]).map(a => a.id === updated.id ? updated : a) as any);
+    setSelected((prev: any) => prev?.id === updated.id ? updated : prev);
     setEditingAppt(null);
   }, []);
 
-  const onSelectEvent = useCallback((e: CalEvent) => setSelected(e.resource), []);
-  const onSelectSlot  = useCallback((slotInfo: { start: Date | string }) => {
+  const onSelectEvent = useCallback((e: any) => setSelected(e.resource), []);
+  const onSelectSlot  = useCallback((slotInfo: any) => {
     const d = slotInfo.start instanceof Date ? slotInfo.start : new Date(slotInfo.start);
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     navigate('appointment-new', undefined, { prefillDate: dateStr });
@@ -309,10 +156,8 @@ export default function AppointmentList() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-      {/* Modal d'édition */}
-      {editingAppt && <EditModal appt={editingAppt} onClose={() => setEditingAppt(null)} onSaved={handleSaved} />}
+      {editingAppt && <AppointmentEditModal appt={editingAppt} onClose={() => setEditingAppt(null)} onSaved={handleSaved} />}
 
-      {/* Popover statut — position fixe, rendu hors table */}
       {statusPopover && (
         <div
           onMouseDown={e => e.stopPropagation()}
@@ -333,7 +178,6 @@ export default function AppointmentList() {
         </div>
       )}
 
-      {/* Popover menu ⋮ — position fixe */}
       {menuPopover && (
         <div
           onMouseDown={e => e.stopPropagation()}
@@ -341,7 +185,7 @@ export default function AppointmentList() {
         >
           <button
             onClick={() => {
-              const appt = appointments.find(a => a.id === menuPopover.id);
+              const appt = (appointments as any[]).find(a => a.id === menuPopover.id);
               if (appt) setEditingAppt(appt);
               setMenuPopover(null);
             }}
@@ -362,7 +206,6 @@ export default function AppointmentList() {
         </div>
       )}
 
-      {/* ── En-tête ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
         <div>
           <h1 className="adm-page-title">Rendez-vous</h1>
@@ -379,7 +222,6 @@ export default function AppointmentList() {
         </div>
       </div>
 
-      {/* ── VUE LISTE ── */}
       {view === 'list' && (
         <div className="adm-card">
           <div className="adm-card-head" style={{ gap: '10px', flexWrap: 'wrap' }}>
@@ -388,7 +230,7 @@ export default function AppointmentList() {
               <input type="text" placeholder="Rechercher patient, médecin, service..." value={search}
                 onChange={(e) => setSearch(e.target.value)} className="adm-search-input" />
             </div>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as AppointmentStatus | 'all')}
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
               className="adm-input" style={{ width: 'auto', padding: '6px 10px' }}>
               <option value="all">Tous les statuts</option>
               <option value="scheduled">Planifié</option>
@@ -417,7 +259,7 @@ export default function AppointmentList() {
                   <tr><td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: 'var(--c-t3)' }}>Chargement…</td></tr>
                 ) : filtered.length === 0 ? (
                   <tr><td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: 'var(--c-t3)' }}>Aucun rendez-vous trouvé</td></tr>
-                ) : filtered.map((appt) => {
+                ) : filtered.map((appt: any) => {
                   const { variant, label } = statusBadge(appt.status);
                   const isBusy = updatingId === appt.id;
                   return (
@@ -437,8 +279,6 @@ export default function AppointmentList() {
                           <Clock size={11} /> {appt.duration} min
                         </span>
                       </td>
-
-                      {/* Statut cliquable */}
                       <td>
                         {isBusy ? (
                           <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid var(--c-bdr)', borderTopColor: 'var(--c-accent)', animation: 'spin 0.7s linear infinite' }} />
@@ -447,7 +287,7 @@ export default function AppointmentList() {
                             onMouseDown={(e) => {
                               e.stopPropagation();
                               const rect = e.currentTarget.getBoundingClientRect();
-                              setStatusPopover(prev => prev?.id === appt.id ? null : { id: appt.id, top: rect.bottom + 4, left: rect.left });
+                              setStatusPopover((prev: any) => prev?.id === appt.id ? null : { id: appt.id, top: rect.bottom + 4, left: rect.left });
                               setMenuPopover(null);
                             }}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -456,14 +296,12 @@ export default function AppointmentList() {
                           </button>
                         )}
                       </td>
-
-                      {/* Menu ⋮ */}
                       <td style={{ textAlign: 'center' }}>
                         <button
                           onMouseDown={(e) => {
                             e.stopPropagation();
                             const rect = e.currentTarget.getBoundingClientRect();
-                            setMenuPopover(prev => prev?.id === appt.id ? null : { id: appt.id, top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                            setMenuPopover((prev: any) => prev?.id === appt.id ? null : { id: appt.id, top: rect.bottom + 4, right: window.innerWidth - rect.right });
                             setStatusPopover(null);
                           }}
                           className="adm-icon-btn"
@@ -481,7 +319,6 @@ export default function AppointmentList() {
         </div>
       )}
 
-      {/* ── VUE CALENDRIER ── */}
       {view === 'calendar' && (
         <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
           <div className="adm-card adm-rbc-wrap" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
@@ -492,7 +329,7 @@ export default function AppointmentList() {
               selectable onSelectSlot={onSelectSlot} onSelectEvent={onSelectEvent as any}
               eventPropGetter={eventPropGetter as any} dayPropGetter={dayPropGetter}
               messages={FR_MESSAGES} culture="fr"
-              components={{ toolbar: CustomToolbar as any, event: EventCard as any }}
+              components={{ toolbar: AppointmentToolbar as any, event: AppointmentEventCard as any }}
               formats={{
                 monthHeaderFormat: (date: Date) => format(date, 'MMMM yyyy', { locale: fr }),
                 dayHeaderFormat: (date: Date) => format(date, 'EEEE d MMMM', { locale: fr }),
@@ -507,9 +344,7 @@ export default function AppointmentList() {
             />
           </div>
 
-          {/* Panneau latéral */}
           <div style={{ width: 248, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {/* Légende */}
             <div className="adm-card">
               <div className="adm-card-head"><p className="adm-card-title">Légende</p></div>
               <div className="adm-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
@@ -522,7 +357,6 @@ export default function AppointmentList() {
               </div>
             </div>
 
-            {/* Filtre rapide */}
             <div className="adm-card">
               <div className="adm-card-head"><p className="adm-card-title">Filtre rapide</p></div>
               <div className="adm-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -542,7 +376,6 @@ export default function AppointmentList() {
               </div>
             </div>
 
-            {/* Détail RDV sélectionné */}
             {selected && (
               <div className="adm-card">
                 <div className="adm-card-head">
@@ -599,6 +432,7 @@ export default function AppointmentList() {
           </div>
         </div>
       )}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

@@ -4,8 +4,8 @@ import { ArrowLeft, Save, CalendarDays, Search, X, Loader2 } from 'lucide-react'
 import { useNavigation } from '../../../context/NavigationContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useDoctors } from '../../../context/DoctorContext';
-import { createRendezVous } from '../../../services/appointmentService';
-import { patientsData, type Patient } from '../../../services/patients';
+import { postRendezVous } from '../../../services/postRendezVous';
+import { getPatient } from '../../../services/getPatient';
 
 const timeSlots = [
   '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00',
@@ -21,28 +21,25 @@ export default function AppointmentForm() {
   const location       = useLocation();
   const prefillDate    = (location.state as { prefillDate?: string } | null)?.prefillDate ?? '';
 
-  // ── Patient combobox ──────────────────────────────────────────────────────
   const [patientQuery,    setPatientQuery]    = useState('');
-  const [patientResults,  setPatientResults]  = useState<Patient[]>([]);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [patientResults,  setPatientResults]  = useState([]);
+  const [selectedPatient, setSelectedPatient] = useState(null as any);
   const [showDropdown,    setShowDropdown]    = useState(false);
   const [searching,       setSearching]       = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dropdownRef = useRef(null as any);
+  const searchTimer = useRef(null as any);
 
-  // ── Formulaire ────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     serviceFilter: '', doctorId: '',
     date: prefillDate, time: '', duration: '30', type: 'Consultation', notes: '',
   });
   const [saving, setSaving] = useState(false);
-  const [error,  setError]  = useState<string | null>(null);
+  const [error,  setError]  = useState(null as any);
   const [saved,  setSaved]  = useState(false);
 
-  // ── Fermer dropdown au clic extérieur ─────────────────────────────────────
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setShowDropdown(false);
       }
     }
@@ -50,7 +47,6 @@ export default function AppointmentForm() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  // ── Recherche patient (debounce 300ms) ────────────────────────────────────
   useEffect(() => {
     if (searchTimer.current) clearTimeout(searchTimer.current);
     if (!patientQuery.trim() || patientQuery.length < 2) {
@@ -61,7 +57,7 @@ export default function AppointmentForm() {
     searchTimer.current = setTimeout(async () => {
       setSearching(true);
       try {
-        const data = await patientsData.rechercher(patientQuery);
+        const data = await getPatient.rechercher(patientQuery);
         setPatientResults(data);
         setShowDropdown(true);
       } catch {
@@ -72,7 +68,7 @@ export default function AppointmentForm() {
     }, 300);
   }, [patientQuery]);
 
-  function selectPatient(p: Patient) {
+  function selectPatient(p: any) {
     setSelectedPatient(p);
     setPatientQuery(`${p.prenom} ${p.nom} — ${p.numeroIpp}`);
     setShowDropdown(false);
@@ -84,12 +80,11 @@ export default function AppointmentForm() {
     setPatientResults([]);
   }
 
-  // ── Médecins filtrés par service ──────────────────────────────────────────
-  const serviceOptions = Array.from(new Set(doctors.map((d) => d.department))).filter(Boolean).sort();
+  const serviceOptions = Array.from(new Set((doctors as any[]).map((d: any) => d.department))).filter(Boolean).sort();
   const filteredDoctors = form.serviceFilter
-    ? doctors.filter((d) => d.department === form.serviceFilter)
-    : doctors;
-  const selectedDoctor = doctors.find((d) => d.id === form.doctorId);
+    ? (doctors as any[]).filter((d: any) => d.department === form.serviceFilter)
+    : (doctors as any[]);
+  const selectedDoctor = (doctors as any[]).find((d: any) => d.id === form.doctorId);
 
   function handleChange(field: string, value: string) {
     setForm((prev) => {
@@ -99,7 +94,6 @@ export default function AppointmentForm() {
     });
   }
 
-  // ── Enregistrement ────────────────────────────────────────────────────────
   async function handleSave() {
     if (!selectedPatient || !form.doctorId || !form.date || !form.time) {
       setError('Veuillez renseigner le patient, le médecin, la date et l\'heure.');
@@ -108,7 +102,7 @@ export default function AppointmentForm() {
     setError(null);
     setSaving(true);
     try {
-      await createRendezVous({
+      await postRendezVous.createRendezVous({
         patientId:     selectedPatient.id,
         medecinUserId: form.doctorId,
         dateHeure:     `${form.date}T${form.time}:00`,
@@ -128,7 +122,6 @@ export default function AppointmentForm() {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-      {/* En-tête */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button onClick={() => navigate('appointments')} className="adm-back-btn"><ArrowLeft size={16} /></button>
         <div>
@@ -152,14 +145,12 @@ export default function AppointmentForm() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: '14px', alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
-          {/* ── Patient & Médecin ── */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
               <p className="adm-card-title">Patient &amp; Médecin</p>
             </div>
             <div className="adm-form-section-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-              {/* Recherche patient */}
               <div className="adm-form-field">
                 <label className="adm-label">Rechercher un patient (nom, prénom ou IPP) *</label>
                 <div ref={dropdownRef} style={{ position: 'relative' }}>
@@ -177,23 +168,17 @@ export default function AppointmentForm() {
                       onFocus={() => patientResults.length > 0 && setShowDropdown(true)}
                     />
                     {patientQuery && (
-                      <button
-                        type="button"
-                        onClick={clearPatient}
-                        style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-t3)', display: 'flex', alignItems: 'center' }}
-                      >
+                      <button type="button" onClick={clearPatient}
+                        style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-t3)', display: 'flex', alignItems: 'center' }}>
                         <X size={13} />
                       </button>
                     )}
                   </div>
 
-                  {/* Dropdown résultats */}
                   {showDropdown && patientResults.length > 0 && (
                     <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--c-bg)', border: '1px solid var(--c-bdr)', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', marginTop: '4px', maxHeight: '240px', overflowY: 'auto' }}>
-                      {patientResults.map((p) => (
-                        <div
-                          key={p.id}
-                          onMouseDown={() => selectPatient(p)}
+                      {(patientResults as any[]).map((p) => (
+                        <div key={p.id} onMouseDown={() => selectPatient(p)}
                           style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid var(--c-bdr)', transition: 'background 0.1s' }}
                           onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--c-surf2)')}
                           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
@@ -229,20 +214,19 @@ export default function AppointmentForm() {
                 </div>
               </div>
 
-              {/* Service + Médecin */}
               <div className="adm-form-grid adm-form-grid-2">
                 <div className="adm-form-field">
                   <label className="adm-label">Service</label>
                   <select value={form.serviceFilter} onChange={(e) => handleChange('serviceFilter', e.target.value)} className="adm-input">
                     <option value="">Tous les services</option>
-                    {serviceOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+                    {(serviceOptions as string[]).map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div className="adm-form-field">
                   <label className="adm-label">Médecin *</label>
                   <select value={form.doctorId} onChange={(e) => handleChange('doctorId', e.target.value)} className="adm-input">
                     <option value="">Sélectionner un médecin</option>
-                    {filteredDoctors.map((d) => (
+                    {filteredDoctors.map((d: any) => (
                       <option key={d.id} value={d.id}>
                         {d.name}{d.serviceCode ? ` — ${d.serviceCode}` : ''}
                       </option>
@@ -253,7 +237,6 @@ export default function AppointmentForm() {
             </div>
           </div>
 
-          {/* ── Date et heure ── */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
               <div className="adm-form-section-icon adm-fsi-blue"><CalendarDays size={13} /></div>
@@ -292,7 +275,6 @@ export default function AppointmentForm() {
             </div>
           </div>
 
-          {/* ── Détails ── */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
               <p className="adm-card-title">Détails du rendez-vous</p>
@@ -313,10 +295,9 @@ export default function AppointmentForm() {
           </div>
         </div>
 
-        {/* ── Sidebar ── */}
+        {/* Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-          {/* Patient sélectionné */}
           {selectedPatient && (
             <div style={{ background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-bd)', borderRadius: '10px', padding: '14px' }}>
               <p className="adm-sec-h" style={{ color: 'var(--c-accent)' }}>Patient sélectionné</p>
@@ -334,7 +315,6 @@ export default function AppointmentForm() {
             </div>
           )}
 
-          {/* Récapitulatif */}
           <div className="adm-card">
             <div className="adm-card-head">
               <p className="adm-card-title">Récapitulatif RDV</p>
@@ -368,6 +348,7 @@ export default function AppointmentForm() {
           </div>
         </div>
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
