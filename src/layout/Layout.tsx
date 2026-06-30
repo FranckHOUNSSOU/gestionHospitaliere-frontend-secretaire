@@ -3,16 +3,14 @@ import { useState } from 'react';
 import { Topbar } from './Topbar/Topbar';
 import { Sidebar } from './Sidebar/Sidebar';
 import { Footer } from './Footer/Footer';
-import { useTheme } from '../context/ThemeContext';
 import { DoctorProvider } from '../context/DoctorContext';
 import '../styles/design-system.css';
 
 export const Layout = () => {
-  const { dark } = useTheme();
   const [minimized, setMinimized] = useState(false);
 
   return (
-    <div className="adm" data-theme={dark ? 'dark' : ''} style={{ height: '100vh', overflow: 'hidden' }}>
+    <div className="adm" style={{ height: '100vh', overflow: 'hidden' }}>
       <div className="adm-wrap">
         <Topbar minimized={minimized} onToggleSidebar={() => setMinimized(m => !m)} />
         <div className="adm-body">

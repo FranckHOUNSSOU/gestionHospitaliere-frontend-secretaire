@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
 import { NavigationProvider } from './context/NavigationContext';
 import { PrivateRoute } from './utils/PrivateRoute';
 import { Layout } from './layout/Layout';
@@ -26,50 +25,48 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ThemeProvider>
-          <NavigationProvider>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route
-                path="/"
-                element={
-                  <PrivateRoute>
-                    <Layout />
-                  </PrivateRoute>
-                }
-              >
-                <Route index element={<DashboardAgent />} />
-                <Route path="dashboard" element={<DashboardAgent />} />
+        <NavigationProvider>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="/"
+              element={
+                <PrivateRoute>
+                  <Layout />
+                </PrivateRoute>
+              }
+            >
+              <Route index element={<DashboardAgent />} />
+              <Route path="dashboard" element={<DashboardAgent />} />
 
-                {/* Patients */}
-                <Route path="patients" element={<PatientList />} />
-                <Route path="patients/new" element={<PatientForm />} />
-                <Route path="patients/:id" element={<PatientDetail />} />
-                <Route path="patients/:id/edit" element={<PatientForm />} />
-                <Route path="patients/:id/dossier" element={<PatientFile />} />
+              {/* Patients */}
+              <Route path="patients" element={<PatientList />} />
+              <Route path="patients/new" element={<PatientForm />} />
+              <Route path="patients/:id" element={<PatientDetail />} />
+              <Route path="patients/:id/edit" element={<PatientForm />} />
+              <Route path="patients/:id/dossier" element={<PatientFile />} />
 
-                {/* Admissions */}
-                <Route path="admissions" element={<AdmissionList />} />
-                <Route path="admissions/new" element={<AdmissionForm />} />
-                <Route path="admissions/:id/sortie" element={<AdmissionDischarge />} />
+              {/* Admissions */}
+              <Route path="admissions" element={<AdmissionList />} />
+              <Route path="admissions/new" element={<AdmissionForm />} />
+              <Route path="admissions/:id/sortie" element={<AdmissionDischarge />} />
 
-                {/* Rendez-vous */}
-                <Route path="appointments" element={<AppointmentList />} />
-                <Route path="appointments/new" element={<AppointmentForm />} />
+              {/* Rendez-vous */}
+              <Route path="appointments" element={<AppointmentList />} />
+              <Route path="appointments/new" element={<AppointmentForm />} />
 
-                {/* Facturation */}
-                <Route path="billing" element={<InvoiceList />} />
-                <Route path="billing/new" element={<InvoiceForm />} />
-                <Route path="billing/:id" element={<InvoiceDetail />} />
+              {/* Facturation */}
+              <Route path="billing" element={<InvoiceList />} />
+              <Route path="billing/new" element={<InvoiceForm />} />
+              <Route path="billing/:id" element={<InvoiceDetail />} />
 
-                <Route path="reports" element={<Reports />} />
-                <Route path="notifications" element={<NotificationsPage />} />
-                <Route path="profil" element={<ProfilPage />} />
-              </Route>
-              <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
-          </NavigationProvider>
-        </ThemeProvider>
+              <Route path="reports" element={<Reports />} />
+              <Route path="notifications" element={<NotificationsPage />} />
+              <Route path="profil" element={<ProfilPage />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </NavigationProvider>
       </AuthProvider>
     </BrowserRouter>
   );

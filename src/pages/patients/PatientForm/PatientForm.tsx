@@ -1,31 +1,47 @@
-import { useState } from 'react';
-import { ArrowLeft, Save, User, Phone, MapPin, Shield, AlertTriangle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Save, User, Phone, MapPin, Shield, AlertTriangle, Loader2 } from 'lucide-react';
 import { PhoneInput } from 'react-international-phone';
 import { useNavigation } from '../../../context/NavigationContext';
-import { patients } from '../../../services/mockData';
+import { getPatient } from '../../../services/getPatient';
 
 export default function PatientForm() {
   const { navigate, nav } = useNavigation();
-  const isEdit = nav.page === 'patient-edit';
-  const existing = isEdit && nav.selectedId ? patients.find((p) => p.id === nav.selectedId) : null;
+  const isEdit  = nav.page === 'patient-edit';
+  const patId   = nav.selectedId ?? '';
 
   const [form, setForm] = useState({
-    firstName: existing?.firstName ?? '',
-    lastName: existing?.lastName ?? '',
-    dateOfBirth: existing?.dateOfBirth ?? '',
-    gender: existing?.gender ?? 'M',
-    phone: existing?.phone ?? '',
-    email: existing?.email ?? '',
-    address: existing?.address ?? '',
-    city: existing?.city ?? '',
-    bloodType: existing?.bloodType ?? 'A+',
-    insurance: existing?.insurance ?? '',
-    insuranceNumber: existing?.insuranceNumber ?? '',
-    emergencyContact: existing?.emergencyContact ?? '',
-    emergencyPhone: existing?.emergencyPhone ?? '',
-    notes: existing?.notes ?? '',
+    firstName: '', lastName: '', dateOfBirth: '', gender: 'M',
+    phone: '', email: '', address: '', city: '',
+    bloodType: 'A+', insurance: '', insuranceNumber: '',
+    emergencyContact: '', emergencyPhone: '', notes: '',
   });
-  const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(isEdit);
+  const [saved,   setSaved]   = useState(false);
+
+  useEffect(() => {
+    if (!isEdit || !patId) return;
+    getPatient.findOne(patId)
+      .then((p: any) => {
+        setForm({
+          firstName:        p.prenom          ?? p.firstName          ?? '',
+          lastName:         p.nom             ?? p.lastName           ?? '',
+          dateOfBirth:      p.dateNaissance   ?? p.dateOfBirth        ?? '',
+          gender:           p.sexe            ?? p.genre ?? p.gender  ?? 'M',
+          phone:            p.telephoneMobile ?? p.telephone ?? p.phone ?? '',
+          email:            p.email           ?? '',
+          address:          p.adresse         ?? p.address            ?? '',
+          city:             p.ville           ?? p.city               ?? '',
+          bloodType:        p.groupeSanguin   ?? p.bloodType          ?? 'A+',
+          insurance:        p.assurance       ?? p.insurance          ?? '',
+          insuranceNumber:  p.numeroAssurance ?? p.insuranceNumber    ?? '',
+          emergencyContact: p.contactUrgence  ?? p.emergencyContact   ?? '',
+          emergencyPhone:   p.telUrgence      ?? p.emergencyPhone     ?? '',
+          notes:            p.notes           ?? '',
+        });
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [isEdit, patId]);
 
   function handleChange(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -36,9 +52,18 @@ export default function PatientForm() {
     setTimeout(() => navigate('patients'), 1000);
   }
 
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px', gap: '10px', color: 'var(--c-t3)', fontSize: '13px' }}>
+        <Loader2 size={18} style={{ animation: 'spin 0.7s linear infinite' }} />
+        Chargement du dossier…
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button onClick={() => navigate('patients')} className="adm-back-btn"><ArrowLeft size={16} /></button>
         <div>
@@ -46,7 +71,7 @@ export default function PatientForm() {
             {isEdit ? 'Modifier le dossier patient' : 'Enregistrer un nouveau patient'}
           </p>
           <p style={{ fontSize: '12px', color: 'var(--c-t2)', margin: '2px 0 0' }}>
-            {isEdit ? `Modification de ${existing?.firstName} ${existing?.lastName}` : 'Remplissez toutes les informations requises'}
+            {isEdit ? `Modification de ${form.firstName} ${form.lastName}` : 'Remplissez toutes les informations requises'}
           </p>
         </div>
       </div>
@@ -59,9 +84,7 @@ export default function PatientForm() {
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '14px', alignItems: 'start' }}>
-        {/* Left column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {/* Informations personnelles */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
               <div className="adm-form-section-icon adm-fsi-blue"><User size={13} /></div>
@@ -101,7 +124,6 @@ export default function PatientForm() {
             </div>
           </div>
 
-          {/* Coordonnées */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
               <div className="adm-form-section-icon adm-fsi-blue"><Phone size={13} /></div>
@@ -132,7 +154,6 @@ export default function PatientForm() {
             </div>
           </div>
 
-          {/* Contact d'urgence */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
               <div className="adm-form-section-icon adm-fsi-red"><AlertTriangle size={13} /></div>
@@ -154,9 +175,7 @@ export default function PatientForm() {
           </div>
         </div>
 
-        {/* Right column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {/* Assurance */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
               <div className="adm-form-section-icon adm-fsi-green"><Shield size={13} /></div>
@@ -180,7 +199,6 @@ export default function PatientForm() {
             </div>
           </div>
 
-          {/* Notes */}
           <div className="adm-form-section">
             <div className="adm-form-section-head">
               <div className="adm-form-section-icon adm-fsi-amber"><MapPin size={13} /></div>
@@ -193,7 +211,6 @@ export default function PatientForm() {
             </div>
           </div>
 
-          {/* Actions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button onClick={handleSave} className="adm-btn adm-btn-primary" style={{ height: '38px', justifyContent: 'center', gap: '6px' }}>
               <Save size={14} />
@@ -205,6 +222,7 @@ export default function PatientForm() {
           </div>
         </div>
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

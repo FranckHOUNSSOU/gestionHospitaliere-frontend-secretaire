@@ -295,14 +295,7 @@
   margin-bottom: 6px !important;
 }
 
-/* Mode sombre — ajustements automatiques via variables CSS */
-.adm[data-theme="dark"] .adm-rbc-wrap .rbc-day-bg:hover {
-  background: var(--c-surf3) !important;
-}
 
-.adm[data-theme="dark"] .adm-rbc-wrap .rbc-event {
-  box-shadow: 0 1px 4px rgba(0,0,0,0.4) !important;
-}
 /* ═══════════════════════════════════════════════════════════
    CALENDAR (appointment view)
    ═══════════════════════════════════════════════════════════ */

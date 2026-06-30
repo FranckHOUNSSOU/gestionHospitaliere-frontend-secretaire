@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Bell, CheckCheck } from 'lucide-react';
-import { getMesNotifications, marquerLu, marquerToutLu, type Notif } from '../../services/notificationService';
+import { getNotification } from '../../services/getNotification';
+import { patchNotification } from '../../services/patchNotification';
 
 function fdt(iso: string) {
   return new Date(iso).toLocaleDateString('fr-FR', {
@@ -10,12 +11,12 @@ function fdt(iso: string) {
 }
 
 export default function NotificationsPage() {
-  const [notifs,   setNotifs]   = useState<Notif[]>([]);
+  const [notifs,   setNotifs]   = useState([]);
   const [loading,  setLoading]  = useState(true);
 
   async function load() {
     try {
-      const { data } = await getMesNotifications();
+      const data = await getNotification.getMesNotifications();
       setNotifs(data);
     } catch { /* silent */ }
     finally { setLoading(false); }
@@ -24,16 +25,16 @@ export default function NotificationsPage() {
   useEffect(() => { load(); }, []);
 
   async function handleLireTout() {
-    await marquerToutLu();
-    setNotifs(prev => prev.map(n => ({ ...n, lu: true })));
+    await patchNotification.marquerToutLu();
+    setNotifs((prev: any[]) => prev.map(n => ({ ...n, lu: true })));
   }
 
   async function handleLire(id: string) {
-    await marquerLu(id);
-    setNotifs(prev => prev.map(n => n.id === id ? { ...n, lu: true } : n));
+    await patchNotification.marquerLu(id);
+    setNotifs((prev: any[]) => prev.map(n => n.id === id ? { ...n, lu: true } : n));
   }
 
-  const nonLues = notifs.filter(n => !n.lu).length;
+  const nonLues = (notifs as any[]).filter(n => !n.lu).length;
 
   return (
     <div style={{ maxWidth: 700, margin: '0 auto' }}>
@@ -60,7 +61,7 @@ export default function NotificationsPage() {
         </div>
       ) : (
         <div className="adm-card">
-          {notifs.map((n, i) => (
+          {(notifs as any[]).map((n, i) => (
             <div
               key={n.id}
               onClick={() => !n.lu && handleLire(n.id)}

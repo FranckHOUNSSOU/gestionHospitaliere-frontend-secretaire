@@ -1,8 +1,8 @@
-export interface CIM10Entry {
+export type CIM10Entry = {
   code: string;
   libelle: string;
   type: 'chapitre' | 'categorie' | 'code';
-}
+};
 
 export const CIM10_DATA: CIM10Entry[] = [
   // ── CHAPITRES ──────────────────────────────────────────────────────────────

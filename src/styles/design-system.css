@@ -39,29 +39,6 @@
   --c-topbar:    3.5rem;
 }
 
-/* ── TOKENS SOMBRE ────────────────────────────────────────── */
-.adm[data-theme="dark"] {
-  --c-bg:        #0d1117;
-  --c-surf:      #161b22;
-  --c-surf2:     #1c2230;
-  --c-surf3:     #242d3a;
-  --c-bdr:       #2d3748;
-  --c-bdr2:      #4a5568;
-  --c-t0:        #ffffff;
-  --c-t1:        #e6edf3;
-  --c-t2:        #b0bec5;
-  --c-t3:        #8b949e;
-  --c-accent:    #388bfd;
-  --c-accent-bg: #0d1f3c;
-  --c-accent-bd: #1f4080;
-  --c-green:     #3fb950;
-  --c-green-bg:  #0a2e14;
-  --c-green-bd:  #1a6630;
-  --c-amber:     #d29922;
-  --c-amber-bg:  #2d1f06;
-  --c-red:       #f85149;
-  --c-red-bg:    #2d0a0a;
-}
 
 /* ═══════════════════════════════════════════════════════════
    APP SHELL
