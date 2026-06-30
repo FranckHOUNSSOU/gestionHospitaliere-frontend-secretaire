@@ -6,7 +6,7 @@ const DoctorContext = createContext(null as any);
 
 export function DoctorProvider({ children }: { children: any }) {
   const { user } = useAuth();
-  const [doctors, setDoctors] = useState([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   async function fetchDoctors() {
