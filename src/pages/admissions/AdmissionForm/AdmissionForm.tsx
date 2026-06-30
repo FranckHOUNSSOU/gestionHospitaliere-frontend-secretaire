@@ -47,7 +47,7 @@ export default function AdmissionForm() {
 
   const [selectedPatient, setSelectedPatient] = useState(null as any);
   const [patientQuery,    setPatientQuery]    = useState('');
-  const [patientResults,  setPatientResults]  = useState([]);
+  const [patientResults,  setPatientResults]  = useState<any[]>([]);
   const [patientLoading,  setPatientLoading]  = useState(false);
   const [showResults,     setShowResults]     = useState(false);
   const debounceRef = useRef(null as any);

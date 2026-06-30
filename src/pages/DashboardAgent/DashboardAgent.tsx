@@ -31,9 +31,9 @@ function toAdmission(p: any): any | null {
 export default function DashboardAgent() {
   const { navigate } = useNavigation();
 
-  const [allAdmissions, setAllAdmissions] = useState([]);
-  const [appointments,  setAppointments]  = useState([]);
-  const [invoices,      setInvoices]      = useState([]);
+  const [allAdmissions, setAllAdmissions] = useState<any[]>([]);
+  const [appointments,  setAppointments]  = useState<any[]>([]);
+  const [invoices,      setInvoices]      = useState<any[]>([]);
   const [patientCount,  setPatientCount]  = useState(0);
   const [dataLoading,   setDataLoading]   = useState(true);
 

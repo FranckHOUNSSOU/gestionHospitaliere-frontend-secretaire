@@ -26,7 +26,7 @@ function calcAge(dob: string) {
 
 export default function PatientList() {
   const { navigate } = useNavigation();
-  const [allPatients, setAllPatients] = useState([]);
+  const [allPatients, setAllPatients] = useState<any[]>([]);
   const [loading,     setLoading]     = useState(true);
   const [search,      setSearch]      = useState('');
   const [statusFilter, setStatusFilter] = useState('all');

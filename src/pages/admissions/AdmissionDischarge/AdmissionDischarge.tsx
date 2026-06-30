@@ -12,7 +12,7 @@ export default function AdmissionList() {
   const [search,       setSearch]       = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const [results,      setResults]      = useState([]);
+  const [results,      setResults]      = useState<any[]>([]);
   const [searching,    setSearching]    = useState(false);
   const [searchError,  setSearchError]  = useState(null as any);
 

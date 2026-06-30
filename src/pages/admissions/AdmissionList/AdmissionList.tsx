@@ -74,13 +74,13 @@ export default function AdmissionList() {
   const [supprModal,    setSupprModal]    = useState(null as any);
   const [menuOuvert,    setMenuOuvert]    = useState(null as any);
 
-  const [allRows,  setAllRows]  = useState([]);
+  const [allRows,  setAllRows]  = useState<any[]>([]);
   const [initLoad, setInitLoad] = useState(true);
   const [initErr,  setInitErr]  = useState(null as any);
 
   const [search,       setSearch]       = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [searchRows,   setSearchRows]   = useState([]);
+  const [searchRows,   setSearchRows]   = useState<any[]>([]);
   const [searching,    setSearching]    = useState(false);
   const [searched,     setSearched]     = useState(false);
   const [searchErr,    setSearchErr]    = useState(null as any);

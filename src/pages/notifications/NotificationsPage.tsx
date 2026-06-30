@@ -11,7 +11,7 @@ function fdt(iso: string) {
 }
 
 export default function NotificationsPage() {
-  const [notifs,   setNotifs]   = useState([]);
+  const [notifs,   setNotifs]   = useState<any[]>([]);
   const [loading,  setLoading]  = useState(true);
 
   async function load() {

@@ -18,8 +18,8 @@ export default function PatientDetail() {
 
   const [patient,  setPatient]  = useState(null as any);
   const [dossier,  setDossier]  = useState(null as any);
-  const [rdvList,  setRdvList]  = useState([]);
-  const [factures, setFactures] = useState([]);
+  const [rdvList,  setRdvList]  = useState<any[]>([]);
+  const [factures, setFactures] = useState<any[]>([]);
   const [loading,  setLoading]  = useState(true);
 
   useEffect(() => {

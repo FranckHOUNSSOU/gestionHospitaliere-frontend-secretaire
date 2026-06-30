@@ -22,7 +22,7 @@ export default function AppointmentForm() {
   const prefillDate    = (location.state as { prefillDate?: string } | null)?.prefillDate ?? '';
 
   const [patientQuery,    setPatientQuery]    = useState('');
-  const [patientResults,  setPatientResults]  = useState([]);
+  const [patientResults,  setPatientResults]  = useState<any[]>([]);
   const [selectedPatient, setSelectedPatient] = useState(null as any);
   const [showDropdown,    setShowDropdown]    = useState(false);
   const [searching,       setSearching]       = useState(false);

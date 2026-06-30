@@ -14,7 +14,7 @@ const maxAppts    = Math.max(...monthlyAppointments);
 
 export default function Reports() {
   const [stats,     setStats]     = useState(null as any);
-  const [invoices,  setInvoices]  = useState([]);
+  const [invoices,  setInvoices]  = useState<any[]>([]);
   const [loading,   setLoading]   = useState(true);
 
   useEffect(() => {

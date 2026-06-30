@@ -74,7 +74,7 @@ export default function AppointmentList() {
   const [search, setSearch]     = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selected, setSelected] = useState(null as any);
-  const [appointments, setAppointments] = useState([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
   const [loading,      setLoading]      = useState(false);
   const [updatingId,   setUpdatingId]   = useState(null as any);
   const [editingAppt,  setEditingAppt]  = useState(null as any);

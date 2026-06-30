@@ -7,7 +7,7 @@ export default function InvoiceForm() {
   const { navigate } = useNavigation();
 
   const [query,        setQuery]        = useState('');
-  const [results,      setResults]      = useState([]);
+  const [results,      setResults]      = useState<any[]>([]);
   const [searching,    setSearching]    = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null as any);

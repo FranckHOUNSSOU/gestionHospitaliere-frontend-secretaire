@@ -25,8 +25,8 @@ export default function PatientFile() {
 
   const [dossier,   setDossier]   = useState(null as any);
   const [sejour,    setSejour]    = useState(null as any);
-  const [diagList,  setDiagList]  = useState([]);
-  const [soinsList, setSoinsList] = useState([]);
+  const [diagList,  setDiagList]  = useState<any[]>([]);
+  const [soinsList, setSoinsList] = useState<any[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState(null as any);
   const [openModal, setOpenModal] = useState(null as any);

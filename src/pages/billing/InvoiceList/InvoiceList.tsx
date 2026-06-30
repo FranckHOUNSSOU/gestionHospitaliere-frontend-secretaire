@@ -11,7 +11,7 @@ const STATUT_STYLE: Record<string, { bg: string; color: string }> = {
 
 export default function InvoiceList() {
   const { navigate } = useNavigation();
-  const [factures,  setFactures]  = useState([]);
+  const [factures,  setFactures]  = useState<any[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [erreur,    setErreur]    = useState(null as any);
   const [search,    setSearch]    = useState('');
